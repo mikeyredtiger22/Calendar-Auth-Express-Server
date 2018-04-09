@@ -1,6 +1,6 @@
 const fs = require('fs');
 const axios = require('axios');
-const google = require('googleapis');
+const {google} = require('googleapis');
 const OAuth2Client = google.auth.OAuth2;
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
 const TOKEN_PATH = '../credentials.json';
