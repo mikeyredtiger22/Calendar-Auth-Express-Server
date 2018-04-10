@@ -32,7 +32,7 @@ function getTokens(authCode) {
 	console.log('auth code: ' + authCode);
 	axios.post('https://www.googleapis.com/oauth2/v4/token', "", {
 		params: {
-			code: auth_code,
+			code: authCode,
 			redirect_uri: "http://localhost:8080",
 			grant_type: 'authorization_code'
 		}
