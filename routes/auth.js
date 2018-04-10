@@ -13,7 +13,17 @@ var router = express.Router();
 router.get('/', function(req, res, next) {
 	res.send('received');
 	console.log('request: ');
-	console.dir(req);
+	console.dir(req.originalUrl);
+	console.log('1////////////////');
+	console.dir(req.url);
+	console.log('2////////////////');
+	console.dir(req.query);
+	console.log('3////////////////');
+	console.dir(req.params);
+	console.log('4////////////////');
+	console.dir(req.headers);
+	console.log('5////////////////');
+	console.dir(req.body);
 	// getTokens();
 });
 
