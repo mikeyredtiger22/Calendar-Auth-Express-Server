@@ -45,8 +45,8 @@ function getTokens(authCode) {
 			code: authCode,
 			redirect_uri: "http://localhost:8080",
 			grant_type: 'authorization_code',
-			client_id: client_id,
-			client_secret: client_secret
+			client_id: process.env.oauth_client_id,
+			client_secret: process.env.oauth_client_secret
 		}
 	}).then(function (response) {
 		console.log('response: ');
