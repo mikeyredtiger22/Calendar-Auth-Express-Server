@@ -1,20 +1,9 @@
-const fs = require('fs');
 const axios = require('axios');
 const {google} = require('googleapis');
 const OAuth2Client = google.auth.OAuth2;
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
 const TOKEN_PATH = '../credentials.json';
-let client_secret;
-let client_id;
 
-//todo better explanation of token credentials and oauth/google api credentials
-
-fs.readFile('client_secret.json', (err, content) => {
-	if (err) return console.log('Error loading client secret file:', err);
-	var client_credentials = JSON.parse(content).web;
-	client_secret = client_credentials.client_secret;
-	client_id = client_credentials.client_id;
-});
 
 var express = require('express');
 var router = express.Router();
