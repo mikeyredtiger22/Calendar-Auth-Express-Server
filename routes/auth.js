@@ -4,12 +4,22 @@ const {google} = require('googleapis');
 const OAuth2Client = google.auth.OAuth2;
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
 const TOKEN_PATH = '../credentials.json';
+let client_secret;
+let client_id;
 
+//todo better explanation of token credentials and oauth/google api credentials
+
+fs.readFile('client_secret.json', (err, content) => {
+	if (err) return console.log('Error loading client secret file:', err);
+	var client_credentials = JSON.parse(content).web;
+	client_secret = client_credentials.client_secret;
+	client_id = client_credentials.client_id;
+});
 
 var express = require('express');
 var router = express.Router();
 
-/* GET home page. */
+/* POST auth code. */
 router.post('/', function(req, res, next) {
 	res.send('received');
 	console.log('request: ');
@@ -34,7 +44,9 @@ function getTokens(authCode) {
 		params: {
 			code: authCode,
 			redirect_uri: "http://localhost:8080",
-			grant_type: 'authorization_code'
+			grant_type: 'authorization_code',
+			client_id: client_id,
+			client_secret: client_secret
 		}
 	}).then(function (response) {
 		console.log('response: ');
