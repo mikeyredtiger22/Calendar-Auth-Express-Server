@@ -13,8 +13,15 @@ var router = express.Router();
 router.post('/', function(req, res, next) {
 	res.send('received');
 	console.log('request: ');
-	console.dir(req);
-	// getTokens();
+	console.log('////// originalURL //////');
+	console.dir(req.originalUrl);
+	console.log('////// params //////');
+	console.dir(req.params);
+	console.log('////// query //////');
+	console.dir(req.query);
+	console.log('////// route //////');
+	console.dir(req.route);
+	getTokens(req.query.code);
 });
 
 
@@ -22,6 +29,7 @@ module.exports = router;
 
 
 function getTokens(authCode) {
+	console.log('auth code: ' + authCode);
 	axios.post('https://www.googleapis.com/oauth2/v4/token', "", {
 		params: {
 			code: auth_code,
