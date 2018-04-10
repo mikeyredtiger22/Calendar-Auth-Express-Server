@@ -32,16 +32,16 @@ function getTokens(authCode) {
 	axios.post('https://www.googleapis.com/oauth2/v4/token', "", {
 		params: {
 			code: authCode,
-			redirect_uri: "http://localhost:8080",
+			redirect_uri: "https://ss-calendar.herokuapp.com/",
 			grant_type: 'authorization_code',
 			client_id: process.env.oauth_client_id,
 			client_secret: process.env.oauth_client_secret
 		}
 	}).then(function (response) {
 		console.log('response: ');
-		console.dir(response);
+		console.log(response);
 	}).catch(function (error) {
-		console.dir(error);
+		console.log(error);
 	});
 }
 
