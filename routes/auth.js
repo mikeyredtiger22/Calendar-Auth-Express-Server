@@ -10,20 +10,10 @@ var express = require('express');
 var router = express.Router();
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.post('/', function(req, res, next) {
 	res.send('received');
 	console.log('request: ');
-	console.dir(req.originalUrl);
-	console.log('1////////////////');
-	console.dir(req.url);
-	console.log('2////////////////');
-	console.dir(req.query);
-	console.log('3////////////////');
-	console.dir(req.params);
-	console.log('4////////////////');
-	console.dir(req.headers);
-	console.log('5////////////////');
-	console.dir(req.body);
+	console.dir(req);
 	// getTokens();
 });
 
