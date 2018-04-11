@@ -23,6 +23,12 @@ router.post('/', function(req, res, next) {
 	getTokens(req.query.code);
 });
 
+router.get('/', function(req, res, next) {
+	console.log('received get auth request');
+	console.log(req);
+	res.send('reply')
+});
+
 
 module.exports = router;
 
@@ -32,7 +38,7 @@ function getTokens(authCode) {
 	axios.post('https://www.googleapis.com/oauth2/v4/token', "", {
 		params: {
 			code: authCode,
-			redirect_uri: "https://ss-calendar.herokuapp.com",
+			redirect_uri: process.env.redirect_uri, //"https://ss-calendar.herokuapp.com",
 			grant_type: 'authorization_code',
 			client_id: process.env.oauth_client_id,
 			client_secret: process.env.oauth_client_secret
