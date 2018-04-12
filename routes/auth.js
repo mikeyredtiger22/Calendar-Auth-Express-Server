@@ -2,6 +2,10 @@ const axios = require('axios');
 const {google} = require('googleapis');
 const OAuth2Client = google.auth.OAuth2;
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
+const CLIENT_ID = process.env.client_id;
+const CLIENT_SECRET = process.env.client_secret;
+const FRONT_END_REDIRECT_URL = process.env.front_end-redirect_url;
+const REDIRECT_URL = process.env.redirect_url;
 
 var express = require('express');
 var router = express.Router();
@@ -9,9 +13,9 @@ var router = express.Router();
 // Get redirect from Google Api Auth, initiated by front end web app.
 router.get('/', function(req, res, next) {
 	console.log('received auth code response');
-	res.redirect(process.env.front_end-redirect_url);
-	var code = req.query.code;
-	getTokens(code);
+	res.redirect(FRONT_END_REDIRECT_URL);
+	var authCode = req.query.code;
+	getTokens(authCode);
 });
 
 
@@ -20,6 +24,7 @@ module.exports = router;
 
 function getTokens(authCode) {
 	console.log('auth code: ' + authCode);
+	/*
 	axios.post('https://www.googleapis.com/oauth2/v4/token', "", {
 		params: {
 			code: authCode,
@@ -35,6 +40,17 @@ function getTokens(authCode) {
 		console.log('Auth code exchange error:');
 		console.log(error);
 		throw error;
+	});
+	*/
+	const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
+	oauth2Client.getToken(authCode).then(function (response) {
+		console.log(response);
+
+		oauth2Client.setCredentials(response.tokens);
+
+		// oauth2Client.verifyIdToken().then(function (r) {
+		// 	console.log(r);
+		// })
 	});
 }
 
