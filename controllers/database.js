@@ -20,18 +20,55 @@ MongoClient.connect(url, function(err, client) {
 	societies = db.collection("societies", function(err, res) {
 		if (err) throw err;
 	});
+
+	//Indexes
+  users.createIndex({ _id : 1 }, function(err, result) {
+      // console.log(result);
+    });
+
+  // users.drop();
 });
 
-function addUserAndToken(userData) {
-	users.insertOne(userData, function (err, res) {
+function registerAuth(userId, tokens) {
+  users.find({_id: userId}).count(function (err, count) {
+  	console.log('count: ' + count);
+  });
+
+  users.findOne({_id: userId}, function (err, result) {
+  	console.log(result);
+    if (result) {
+      updateTokens(userId, tokens);
+    } else {
+    	addUserAndToken(userId, tokens);
+    }
+  });
+}
+
+/**
+ * Add new user and tokens to database
+ * @param userId
+ * @param tokens
+ */
+function addUserAndToken(userId, tokens) {
+	users.insertOne({_id: userId, tokens: tokens}, function (err, res) {
+		if (err) console.error(err);
+		console.log(res);
 	});
 }
 
-function updateAccessToken() {
+/**
+ * Updates access_token and expiry..
+ * @param userId
+ * @param tokens
+ */
+function updateTokens(userId, tokens) {
+	users.updateOne({_id: userId}, {$set: {tokens: tokens}}, null, function (err, result) {
+		console.log('update token callback:');
+		console.log(result);
+  });
 }
 
 module.exports = {
-	addUserAndToken: addUserAndToken,
-	updateAccessToken: updateAccessToken
+  registerAuth: registerAuth
 };
 

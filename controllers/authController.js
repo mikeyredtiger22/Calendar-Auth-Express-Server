@@ -4,31 +4,26 @@ const CLIENT_ID = process.env.client_id;
 const CLIENT_SECRET = process.env.client_secret;
 const REDIRECT_URL = process.env.redirect_url;
 
-const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
+const oauth2Client = new google.auth.OAuth2(//CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
+	'***REMOVED***.apps.googleusercontent.com',
+	'***REMOVED***',
+	'http://localhost:3000/auth'
+);
 
 
 function getTokens(authCode) {
 	console.log('auth code: ' + authCode);
-	oauth2Client.getToken(authCode).then(function (response) {
-		// console.log(response);
-		oauth2Client.setCredentials(response.tokens);
+	oauth2Client.getToken(authCode).then(function (tokenResponse) {
+		oauth2Client.setCredentials(tokenResponse.tokens);
 		listEvents(oauth2Client);
-
-		oauth2Client.getTokenInfo(response.tokens.access_token).then(function (tokenInfo) {
-			console.log(tokenInfo);
-			if (!tokenInfo.sub) {
+		oauth2Client.getTokenInfo(tokenResponse.tokens.access_token).then(function (tokenInfo) {
+			var userId = tokenInfo.sub;
+			if (!userId) {
 				console.error("No 'sub' field for user token returned. Make sure to request 'profile' scope");
+			} else {
+        database.registerAuth(userId, tokenResponse.tokens)
 			}
-			console.log('userId:');
-			if (tokenInfo.user_id) console.log(tokenInfo.user_id);
-			console.log('userSub:');
-			/*if (tokenInfo.sub) */console.log(tokenInfo.sub);
 		});
-		database.addUserAndToken(response.tokens)
-
-		// oauth2Client.verifyIdToken().then(function (r) {
-		// 	console.log(r);
-		// })
 	});
 }
 
