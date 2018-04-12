@@ -2,31 +2,16 @@ const axios = require('axios');
 const {google} = require('googleapis');
 const OAuth2Client = google.auth.OAuth2;
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-const TOKEN_PATH = '../credentials.json';
-
 
 var express = require('express');
 var router = express.Router();
 
-/* POST auth code. */
-router.post('/', function(req, res, next) {
-	res.send('received');
-	console.log('request: ');
-	console.log('////// originalURL //////');
-	console.dir(req.originalUrl);
-	console.log('////// params //////');
-	console.dir(req.params);
-	console.log('////// query //////');
-	console.dir(req.query);
-	console.log('////// route //////');
-	console.dir(req.route);
-	getTokens(req.query.code);
-});
-
+// Get redirect from Google Api Auth, initiated by front end web app.
 router.get('/', function(req, res, next) {
-	console.log('received get auth request');
-	console.log(req);
-	res.send('reply')
+	console.log('received auth code response');
+	res.redirect(process.env.front_end-redirect_url);
+	var code = req.query.code;
+	getTokens(code);
 });
 
 
@@ -38,26 +23,18 @@ function getTokens(authCode) {
 	axios.post('https://www.googleapis.com/oauth2/v4/token', "", {
 		params: {
 			code: authCode,
-			redirect_uri: process.env.redirect_uri, //"https://ss-calendar.herokuapp.com",
+			redirect_uri: 'https://ss-calendar.herokuapp.com',
 			grant_type: 'authorization_code',
 			client_id: process.env.oauth_client_id,
 			client_secret: process.env.oauth_client_secret
 		}
 	}).then(function (response) {
-		console.log('response: ');
-		console.log(response);
+		console.log('Auth code exchange response: ');
+		console.log(response.data);
 	}).catch(function (error) {
+		console.log('Auth code exchange error:');
 		console.log(error);
-	});
-}
-
-function authUser() {
-
-	// Load client secrets from a local file.
-	fs.readFile('../client_secret.json', (err, content) => {
-		if (err) return console.log('Error loading client secret file:', err);
-		// Authorize a client with credentials, then call the Google Drive API.
-		authorize(JSON.parse(content));
+		throw error;
 	});
 }
 
