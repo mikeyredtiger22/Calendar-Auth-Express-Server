@@ -45,16 +45,17 @@ function initDatabase(callback) {
   });
 }
 
-function registerUserAuth(userId, tokens) {
+/**
+ * Registers authenticated user. Adds userId and auth tokens to database.
+ * @param userId
+ * @param tokens
+ */
+function registerAuthUser(userId, tokens) {
   users.find({_id: userId}).count(function (err, count) {
   	if (err) throw err;
-  	console.log('users count: ' + count);
-  });
-
-  users.findOne({_id: userId}, function (err, result) {
-  	if (err) throw err;
   	// console.log(result);
-    if (result) {
+    if (count !== 0) {
+      //todo add separate if many accounts on one google profile
       updateUserAuth(userId, tokens);
     } else {
     	createUserAuth(userId, tokens);
@@ -63,7 +64,7 @@ function registerUserAuth(userId, tokens) {
 }
 
 /**
- * Add new user and tokens to database
+ * Add new user and auth tokens to database.
  * @param userId
  * @param tokens
  */
@@ -75,7 +76,7 @@ function createUserAuth(userId, tokens) {
 }
 
 /**
- * Updates access_token and expiry..
+ * Updates user auth tokens.
  * @param userId
  * @param tokens
  */
@@ -87,6 +88,11 @@ function updateUserAuth(userId, tokens) {
   });
 }
 
+/**
+ * Callback with user auth tokens.
+ * @param userId
+ * @param callback (user auth tokens)
+ */
 function getUserAuth(userId, callback) {
 	users.findOne({_id: userId}, function (err, result) {
 		if (err) throw err;
@@ -94,6 +100,10 @@ function getUserAuth(userId, callback) {
   })
 }
 
+/**
+ * Callback with array of all userIds
+ * @param callback (array of userIds)
+ */
 function getAllUserIds(callback) {
   users.find({}).project({_id: 1})
     .map(function (item) {
@@ -105,7 +115,7 @@ function getAllUserIds(callback) {
 }
 
 module.exports = {
-  registerAuth: registerUserAuth,
+  registerAuthUser: registerAuthUser,
 	getUserTokens: getUserAuth,
 	initDatabase: initDatabase,
 	getAllUserIds: getAllUserIds

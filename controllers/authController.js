@@ -6,27 +6,40 @@ const REDIRECT_URL = process.env.redirect_url;
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
 
-// database.initDatabase();
-
-function getAuthTokens(authCode) {
+/**
+ * Registers authenticated user. Users auth code to get authentication tokens. The tokens allow offline
+ * access to users calendar data.
+ * @param authCode
+ */
+function registerAuthUser(authCode) {
 	console.log('auth code: ' + authCode);
+	//Exchange auth code for tokens
 	oauth2Client.getToken(authCode).then(function (tokenResponse) {
-		oauth2Client.setCredentials(tokenResponse.tokens);
-		listEvents(oauth2Client);
+	  //todo validate token?
+    //check 'sub' field supplied, this is used as the user id, corresponds to Google profile
 		oauth2Client.getTokenInfo(tokenResponse.tokens.access_token).then(function (tokenInfo) {
 			var userId = tokenInfo.sub;
 			if (!userId) {
 				console.error("No 'sub' field for user token returned. Make sure to request 'profile' scope");
 			} else {
-        database.registerAuth(userId, tokenResponse.tokens);
+        database.registerAuthUser(userId, tokenResponse.tokens);
 			}
 		});
 	});
 }
 
-function syncCalendar(userId) {
-
+/**
+ * Callback with OAuth2Client object, already initialised with user auth tokens (credentials).
+ * @param userId
+ * @param callback (OAuth2Client object)
+ */
+function getUserAuth(userId, callback) {
+  database.getUserTokens(userId, function (tokens) {
+    oauth2Client.setCredentials(tokens);
+    callback(oauth2Client);
+  });
 }
+
 
 /**
  * Gets events for this user for the next 7 days
@@ -40,19 +53,18 @@ function next3Events(userId, callback) {
 }
 
 function getEventsAuth(userId) {
-  database.getUserTokens(userId, function (tokens) {
-    oauth2Client.setCredentials(tokens);
-    getEvents(oauth2Client);
-  });
+  getUserAuth(userId, getEvents);
 }
 
 function getEvents(auth) {
   const calendarApi = google.calendar({version: 'v3', auth});
   var eventsApi = calendarApi.events.list;
+  var dateStart = new Date(); //current date
+  var dateEnd = dateStart.setDate(dateStart.getDate() + 14); //2 weeks ahead
   var apiOptions = {
     calendarId: 'primary',
-    timeMin: (new Date()).toISOString(),
-    maxResults: 25,
+    timeMin: dateStart.toISOString(),
+    timeMax: dateEnd.toISOString(),
     singleEvents: true
   };
   return listEventsRequest(eventsApi, apiOptions).then((value => {
@@ -101,8 +113,8 @@ function calendarRequest(eventsApi, apiOptions) {
     eventsApi(apiOptions, (err, {data, data : {items, nextPageToken, nextSyncToken}}) => {
       console.log(data);
       if (err) return reject(err);
-      console.log('pt: ' + nextPageToken);
-      console.log('st: ' + nextSyncToken);
+      // console.log('pt: ' + nextPageToken);
+      // console.log('st: ' + nextSyncToken);
 
       var eventsToProcess = items.length;
       var userEvents = [];
@@ -114,7 +126,7 @@ function calendarRequest(eventsApi, apiOptions) {
             end: event.end.dateTime
           });
         eventsToProcess--;
-        console.log('count curr: ' + eventsToProcess);
+        // console.log('count curr: ' + eventsToProcess);
         if (eventsToProcess === 0) {
           // console.log(JSON.stringify(userEvents));
           return resolve({
@@ -188,8 +200,8 @@ function listEvents(auth) {
 }
 
 module.exports = {
-	getTokens: getAuthTokens,
-  syncCalendar: syncCalendar,
+	registerAuthUser: registerAuthUser,
   next3Events: next3Events,
-  getEventsAuth: getEventsAuth
+  getEventsAuth: getEventsAuth,
+  getUserAuth: getUserAuth
 };
