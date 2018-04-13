@@ -4,12 +4,10 @@ const CLIENT_ID = process.env.client_id;
 const CLIENT_SECRET = process.env.client_secret;
 const REDIRECT_URL = process.env.redirect_url;
 
-const oauth2Client = new google.auth.OAuth2(//CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
-	'***REMOVED***.apps.googleusercontent.com',
-	'***REMOVED***',
-	'http://localhost:3000/auth'
-);
+const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
 
+
+database.initDatabase(getEvents7days);
 
 function getTokens(authCode) {
 	console.log('auth code: ' + authCode);
@@ -25,6 +23,18 @@ function getTokens(authCode) {
 			}
 		});
 	});
+}
+
+/**
+ * Gets events for this user for the next 7 days
+ */
+function getEvents7days() {
+	database.getUserTokens('***REMOVED***', function (tokens) {
+		console.log('tokens cb:');
+		console.log(tokens);
+		oauth2Client.setCredentials(tokens);
+		listEvents(oauth2Client);
+  });
 }
 
 /**
