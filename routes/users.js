@@ -1,6 +1,6 @@
+var usersController = require('../controllers/usersController');
 var express = require('express');
 var router = express.Router();
-var usersController = require('../controllers/usersController');
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
@@ -8,9 +8,20 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/all', function (req, res, next) {
-  var callback = function (results) {
-    res.send(results);
-  }
+  usersController.getAllUserIds(function (result) {
+    console.log('got it!');
+    console.log(result);
+    res.send(result);
+  });
 });
+
+// database.initDatabase( function () {
+//   database.getAllUserIds(function (err, results) {
+//     // res.send(results);
+//     console.log('results:');
+//     console.log(results);
+//   });
+// });
+
 
 module.exports = router;

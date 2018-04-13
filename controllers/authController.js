@@ -18,20 +18,25 @@ function getAuthTokens(authCode) {
 			if (!userId) {
 				console.error("No 'sub' field for user token returned. Make sure to request 'profile' scope");
 			} else {
-        database.registerAuth(userId, tokenResponse.tokens)
+        database.registerAuth(userId, tokenResponse.tokens);
 			}
 		});
 	});
 }
 
+function syncCalendar(userId) {
+  next3Events(userId)
+}
+
 /**
  * Gets events for this user for the next 7 days
  */
-function next3Events(userID) {
-	database.getUserTokens(userID, function (tokens) {
+function next3Events(userId) {
+	database.getUserTokens(userId, function (tokens) {
 		console.log('tokens cb:');
 		console.log(tokens);
 		oauth2Client.setCredentials(tokens);
+
 		listEvents(oauth2Client);
   });
 }

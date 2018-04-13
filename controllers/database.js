@@ -33,6 +33,10 @@ function initDatabase(callback) {
 
     //Testing:
     // users.drop();
+    users.find().toArray(function (err, result) {
+      console.log('users collection:');
+      console.log(result);
+    });
 
     // console.log('db init done');
 		if (callback) {
