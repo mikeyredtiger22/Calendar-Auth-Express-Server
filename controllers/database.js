@@ -100,7 +100,6 @@ function getAllUserIds(callback) {
       return item._id;
     })
     .toArray(function (err, result) {
-      console.log(result);
       callback(result);
     });
 }

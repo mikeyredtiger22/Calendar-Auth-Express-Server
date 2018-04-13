@@ -4,17 +4,21 @@ const {google} = require('googleapis');
 
 // database.initDatabase(getAllUserIds);
 
-function getAllUserIds(callback) {
+function getAllUsersCalendarData(callback) {
   database.getAllUserIds(function (userIds) {
-    var length = userIds.length();
-    var asyncCallCount = length;
-    var eventData = [];
-    for (var i = 0; i < length; i++) {
-      // authController.next3Events(userIds[i]); //in progress!
-    }
-
+    var usersToSync = userIds.length;
+    var allCalendarData = [];
+    //For each user:
+    userIds.forEach(function (userId) {
+      authController.next3Events(userId, function (userCalendarData) {
+        allCalendarData = allCalendarData.concat(userCalendarData);
+        usersToSync--;
+        if (usersToSync === 0) {
+          callback(allCalendarData);
+        }
+      });
+    });
   });
-  // authController.syncCalendar(userId)
 }
 
 function syncUserCalendarData(userId) {
@@ -25,5 +29,5 @@ function syncUserCalendarData(userId) {
 }
 
 module.exports = {
-  getAllUserIds: getAllUserIds
+  getAllUsersCalendarData: getAllUsersCalendarData
 };

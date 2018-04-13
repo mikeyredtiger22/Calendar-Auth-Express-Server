@@ -25,19 +25,47 @@ function getAuthTokens(authCode) {
 }
 
 function syncCalendar(userId) {
-  next3Events(userId)
+
 }
 
 /**
  * Gets events for this user for the next 7 days
  */
-function next3Events(userId) {
+function next3Events(userId, callback) {
+  //set user tokens to OAuth credentials to access user calendar data
 	database.getUserTokens(userId, function (tokens) {
-		console.log('tokens cb:');
-		console.log(tokens);
 		oauth2Client.setCredentials(tokens);
+		getUserCalendarData(oauth2Client, callback);
+  });
+}
 
-		listEvents(oauth2Client);
+/**
+ * Lists the next 3 events on the user's primary calendar.
+ */
+function getUserCalendarData(auth, callback) {
+  const calendar = google.calendar({version: 'v3', auth});
+  calendar.events.list({
+    calendarId: 'primary',
+    timeMin: (new Date()).toISOString(),
+    maxResults: 3,
+    singleEvents: true,
+    orderBy: 'startTime',
+  }, (err, {data : {items}}) => {
+    var eventsToProcess = items.length;
+    var userEvents = [];
+    items.forEach(((event) => {
+      userEvents.push(
+        {
+          start: event.start.dateTime,
+          end: event.end.dateTime
+        });
+      eventsToProcess--;
+      console.log('count curr: ' + eventsToProcess);
+      if (eventsToProcess === 0) {
+        // console.log(JSON.stringify(userEvents));
+        callback(userEvents);
+      }
+    }));
   });
 }
 
@@ -69,5 +97,6 @@ function listEvents(auth) {
 
 module.exports = {
 	getTokens: getAuthTokens,
-	listEvents: listEvents
+  syncCalendar: syncCalendar,
+  next3Events: next3Events
 };

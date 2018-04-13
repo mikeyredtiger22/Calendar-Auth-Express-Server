@@ -8,20 +8,17 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/all', function (req, res, next) {
-  usersController.getAllUserIds(function (result) {
-    console.log('got it!');
-    console.log(result);
-    res.send(result);
+  usersController.getAllUsersCalendarData(function (allUsersCalendarData) {
+    res.send(allUsersCalendarData);
   });
 });
 
-// database.initDatabase( function () {
-//   database.getAllUserIds(function (err, results) {
-//     // res.send(results);
-//     console.log('results:');
-//     console.log(results);
+// setTimeout(function () {
+//   usersController.getAllUsersCalendarData(function (allUsersCalendarData) {
+//     console.log('allUsersCalendarData:');
+//     console.log(allUsersCalendarData);
 //   });
-// });
+// }, 1000);
 
 
 module.exports = router;
