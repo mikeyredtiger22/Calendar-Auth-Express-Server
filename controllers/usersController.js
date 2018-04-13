@@ -1,8 +1,5 @@
 var database = require('./database');
 var authController = require('./authController');
-const {google} = require('googleapis');
-
-// database.initDatabase(getAllUserIds);
 
 function getAllUsersCalendarData(callback) {
   database.getAllUserIds(function (userIds) {

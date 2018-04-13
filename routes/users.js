@@ -1,4 +1,5 @@
 var usersController = require('../controllers/usersController');
+var authController = require('../controllers/authController');
 var express = require('express');
 var router = express.Router();
 
@@ -13,12 +14,14 @@ router.get('/all', function (req, res, next) {
   });
 });
 
-// setTimeout(function () {
-//   usersController.getAllUsersCalendarData(function (allUsersCalendarData) {
-//     console.log('allUsersCalendarData:');
-//     console.log(allUsersCalendarData);
-//   });
-// }, 1000);
+setTimeout(function () {
+  // usersController.getAllUsersCalendarData(function (allUsersCalendarData) {
+  //   console.log('allUsersCalendarData:');
+  //   console.log(allUsersCalendarData);
+  // });
+  authController.getEventsAuth('userid.....1234');
+}, 100);
+
 
 
 module.exports = router;
