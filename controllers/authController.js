@@ -6,10 +6,9 @@ const REDIRECT_URL = process.env.redirect_url;
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
 
+// database.initDatabase();
 
-database.initDatabase(getEvents7days);
-
-function getTokens(authCode) {
+function getAuthTokens(authCode) {
 	console.log('auth code: ' + authCode);
 	oauth2Client.getToken(authCode).then(function (tokenResponse) {
 		oauth2Client.setCredentials(tokenResponse.tokens);
@@ -28,8 +27,8 @@ function getTokens(authCode) {
 /**
  * Gets events for this user for the next 7 days
  */
-function getEvents7days() {
-	database.getUserTokens('***REMOVED***', function (tokens) {
+function next3Events(userID) {
+	database.getUserTokens(userID, function (tokens) {
 		console.log('tokens cb:');
 		console.log(tokens);
 		oauth2Client.setCredentials(tokens);
@@ -38,15 +37,14 @@ function getEvents7days() {
 }
 
 /**
- * Lists the next 10 events on the user's primary calendar.
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ * Lists the next 3 events on the user's primary calendar.
  */
 function listEvents(auth) {
 	const calendar = google.calendar({version: 'v3', auth});
 	calendar.events.list({
 		calendarId: 'primary',
 		timeMin: (new Date()).toISOString(),
-		maxResults: 10,
+		maxResults: 3,
 		singleEvents: true,
 		orderBy: 'startTime',
 	}, (err, {data}) => {
@@ -65,6 +63,6 @@ function listEvents(auth) {
 }
 
 module.exports = {
-	getTokens: getTokens,
+	getTokens: getAuthTokens,
 	listEvents: listEvents
 };

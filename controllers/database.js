@@ -7,6 +7,8 @@ var users;
 var usersAvailability;
 var societies;
 
+initDatabase();
+
 // Init database and collections, calls callback after initiation
 function initDatabase(callback) {
 	// console.log('db init start');
@@ -39,7 +41,7 @@ function initDatabase(callback) {
   });
 }
 
-function registerAuth(userId, tokens) {
+function registerUserAuth(userId, tokens) {
   users.find({_id: userId}).count(function (err, count) {
   	if (err) throw err;
   	console.log('users count: ' + count);
@@ -49,9 +51,9 @@ function registerAuth(userId, tokens) {
   	if (err) throw err;
   	// console.log(result);
     if (result) {
-      updateTokens(userId, tokens);
+      updateUserAuth(userId, tokens);
     } else {
-    	addUserAndToken(userId, tokens);
+    	createUserAuth(userId, tokens);
     }
   });
 }
@@ -61,7 +63,7 @@ function registerAuth(userId, tokens) {
  * @param userId
  * @param tokens
  */
-function addUserAndToken(userId, tokens) {
+function createUserAuth(userId, tokens) {
 	users.insertOne({_id: userId, tokens: tokens}, function (err, res) {
 		if (err) throw err;
 		// console.log(res);
@@ -73,7 +75,7 @@ function addUserAndToken(userId, tokens) {
  * @param userId
  * @param tokens
  */
-function updateTokens(userId, tokens) {
+function updateUserAuth(userId, tokens) {
 	users.updateOne({_id: userId}, {$set: {tokens: tokens}}, null, function (err, result) {
 		if (err) throw err;
 		console.log('update token callback:');
@@ -81,20 +83,28 @@ function updateTokens(userId, tokens) {
   });
 }
 
-function getUserTokens(userId, callback) {
+function getUserAuth(userId, callback) {
 	users.findOne({_id: userId}, function (err, result) {
 		if (err) throw err;
 		callback(result.tokens);
   })
 }
 
-function getEventData(userId) {
-
+function getAllUserIds(callback) {
+  users.find({}).project({_id: 1})
+    .map(function (item) {
+      return item._id;
+    })
+    .toArray(function (err, result) {
+      console.log(result);
+      callback(result);
+    });
 }
 
 module.exports = {
-  registerAuth: registerAuth,
-	getUserTokens: getUserTokens,
-	initDatabase: initDatabase
+  registerAuth: registerUserAuth,
+	getUserTokens: getUserAuth,
+	initDatabase: initDatabase,
+	getAllUserIds: getAllUserIds
 };
 
