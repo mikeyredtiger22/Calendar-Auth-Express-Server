@@ -1,4 +1,4 @@
-var database = require('./database');
+var {authDatabaseController} = require('./database');
 const {google} = require('googleapis');
 const CLIENT_ID = process.env.client_id;
 const CLIENT_SECRET = process.env.client_secret;
@@ -11,7 +11,7 @@ const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_U
  * access to users calendar data.
  * @param authCode
  */
-function registerAuthUser(authCode) {
+function registerUserAuthTokens(authCode) {
 	console.log('auth code: ' + authCode);
 	//Exchange auth code for tokens
 	oauth2Client.getToken(authCode).then(function (tokenResponse) {
@@ -22,7 +22,7 @@ function registerAuthUser(authCode) {
 			if (!userId) {
 				console.error("No 'sub' field for user token returned. Make sure to request 'profile' scope");
 			} else {
-        database.registerAuthUser(userId, tokenResponse.tokens);
+        authDatabaseController.registerUserAuthTokens(userId, tokenResponse.tokens);
 			}
 		});
 	});
@@ -34,7 +34,7 @@ function registerAuthUser(authCode) {
  * @param callback (OAuth2Client object)
  */
 function getUserAuth(userId, callback) {
-  database.getUserTokens(userId, function (tokens) {
+  database.getUserAuthTokens(userId, function (tokens) {
     oauth2Client.setCredentials(tokens);
     callback(oauth2Client);
   });
@@ -46,7 +46,7 @@ function getUserAuth(userId, callback) {
  */
 function next3Events(userId, callback) {
   //set user tokens to OAuth credentials to access user calendar data
-	database.getUserTokens(userId, function (tokens) {
+	database.getUserAuthTokens(userId, function (tokens) {
 		oauth2Client.setCredentials(tokens);
 		getUserCalendarData(oauth2Client, callback);
   });
@@ -200,7 +200,7 @@ function listEvents(auth) {
 }
 
 module.exports = {
-	registerAuthUser: registerAuthUser,
+	registerUserAuthTokens: registerUserAuthTokens,
   next3Events: next3Events,
   getEventsAuth: getEventsAuth,
   getUserAuth: getUserAuth

@@ -1,6 +1,10 @@
 var database = require('./database');
 var availabilityController = require('./availabilityController');
 
+
+//TODO check userId before calling methods
+
+
 /**
  *
  * @param societyId
