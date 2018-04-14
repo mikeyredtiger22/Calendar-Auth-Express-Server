@@ -1,4 +1,5 @@
 var MongoClient = require('mongodb').MongoClient;
+var ObjectID = require('mongodb').ObjectID;
 
 var url = "mongodb://localhost:27017";
 
@@ -34,7 +35,9 @@ function initDatabase(callback) {
     });
 
     //Testing:
+    var REMOVE_SOCIETIES = false;
     // users.drop();
+    // societies.drop();
     users.find().toArray(function (err, result) {
       console.log('\nusers collection:\n');
       console.log(result);
@@ -43,6 +46,15 @@ function initDatabase(callback) {
       console.log('\nsocieties collection:\n');
       console.log(result);
     });
+
+    if (REMOVE_SOCIETIES) {
+      setTimeout(function () {
+        users.updateOne({_id: 'xxx'}, {$set: {committees: [], societies: []}},
+          function (err, response) {
+            if (err) console.error(err);
+          });
+      }, 200);
+    }
 
     // console.log('db init done');
 		if (callback) {
@@ -58,11 +70,11 @@ function handleError(error, callback) {
 }
 
 function getUser(userId, callback) {
-  users.find({_id: userId}, callback);
+  users.findOne({_id: userId}, callback);
 }
 
 function getAllSocieties(callback) {
-  societies.find({}, {projection: {_id: 1, name: 1}}, callback);
+  societies.find({}, {projection: {_id: 1, name: 1}}).toArray(callback);
 }
 
 /**
@@ -132,6 +144,7 @@ function getUserAuthTokens(userId, callback) {
  */
 function getUserObject(userId, callback) {
   getUser(userId, function (err, user) {
+    console.log(user);
     if (err) handleError(err, callback);
     getAllSocieties(function (err, societies) {
       if (err) handleError(err, callback);
@@ -139,9 +152,9 @@ function getUserObject(userId, callback) {
       var joined = [];
       var available = [];
       var committees = [];
-      
+
       for(var i=0; i<societies.length; i++) {
-        var currSociety = societies.get(i);
+        var currSociety = societies[i];
         if (user.societies.includes(currSociety._id)) {
           joined.push(currSociety);
         } else {
@@ -162,10 +175,10 @@ function getUserObject(userId, callback) {
 }
 
 function createSociety(userId, societyName, callback) {
-  societies.insertOne({name: societyName, committee: [userId]}, function(err, result) {
+  societies.insertOne({_id: String(ObjectID()), name: societyName, committee: [userId]}, function(err, result) {
     if (err) handleError(err, callback);
-    var societyId = result.objectId;
-    users.updateOne({_id: userId}, {committees: societyId}, function(err, result) {
+    var societyId = result.insertedId;
+    users.updateOne({_id: userId}, {$push: {committees: societyId}}, function(err, result) {
       if (err) handleError(err, callback);
       callback({societyId: societyId});
     });
@@ -173,7 +186,7 @@ function createSociety(userId, societyName, callback) {
 }
 
 function joinSociety(userId, societyId, callback) {
-  societies.updateOne({_id: societyId}, {$push: {members: userId}}, function(err, result) {
+  societies.updateOne({_id: ObjectID(societyId)}, {$push: {members: userId}}, function(err, result) {
     if (err) handleError(err, callback);
     users.updateOne({_id: userId}, {$push: {societies: societyId}}, function(err, result) {
       if (err) handleError(err, callback);

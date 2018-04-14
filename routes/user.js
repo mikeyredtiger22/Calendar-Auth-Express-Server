@@ -9,14 +9,14 @@ router.get('/', function(req, res) {
   })
 });
 
-router.post('/createSociety', function (req, res) {
-  userController.createSociety(req.params.userId, req.params.societyName, function (response) {
+router.post('/', function (req, res) {
+  userController.createSociety(req.query.userId, req.query.societyName, function (response) {
     res.json(response);
   })
 });
 
-router.put('/joinSociety', function (req, res) {
-  userController.joinSociety(req.params.userId, req.params.societyId, function (response) {
+router.put('/', function (req, res) {
+  userController.joinSociety(req.query.userId, req.query.societyId, function (response) {
     res.json(response);
   });
 });
