@@ -117,7 +117,7 @@ function createUserAuthTokens(userId, tokens, callback) {
 function updateUserAuthTokens(userId, tokens, callback) {
 	users.updateOne({_id: userId}, {$set: {tokens: tokens}}, function (err, result) {
     if (err) handleError(err, callback);
-    callback({success: true});
+    callback({updatedAuth: userId});
   });
 }
 
@@ -133,7 +133,7 @@ function getUserAuthTokens(userId, callback) {
 		  callback(null);
     }
 		callback(user.tokens);
-  })
+  });
 }
 
 /**
@@ -186,12 +186,26 @@ function createSociety(userId, societyName, callback) {
 }
 
 function joinSociety(userId, societyId, callback) {
-  societies.updateOne({_id: ObjectID(societyId)}, {$push: {members: userId}}, function(err, result) {
+  societies.updateOne({_id: societyId}, {$push: {members: userId}}, function(err, result) {
     if (err) handleError(err, callback);
     users.updateOne({_id: userId}, {$push: {societies: societyId}}, function(err, result) {
       if (err) handleError(err, callback);
       callback({joined: true});
     });
+  });
+}
+
+function userInCommittee(userId, societyId, callback) {
+  societies.findOne({_id: societyId}, {fields: {_id: 0, committee: 1}}, function (err, {committee}) {
+    if (err) handleError(err, callback);
+    callback(committee.includes(userId));
+  });
+}
+
+function getLastSyncTime(societyId, callback) {
+  societies.findOne({_id: societyId}, {fields: {_id: 0, lastSyncTime: 1}}, function (err, {lastSyncTime}) {
+    if (err) handleError(err, callback);
+    callback(lastSyncTime);
   });
 }
 
@@ -207,22 +221,19 @@ function setSocietyAvailability(societyId, callback) {
   //todo
 }
 /**
- * Callback with array of all userIds
+ * Callback with array of all members in society.
+ * @param societyId
  * @param callback (array of userIds)
  */
-function getAllUserIds(callback) {
-  users.find({}).project({_id: 1})
-    .map(function (item) {
-      return item._id;
-    })
-    .toArray(function (err, result) {
-      callback(result);
-    });
+function getAllSocietyMembers(societyId, callback) {
+  societies.findOne({_id: societyId}, {fields: {_id: 0, members: 1}}, function(err, {members}) {
+    if (err) handleError(err, callback);
+    callback(members);
+  });
 }
 
 module.exports = {
   initDatabase: initDatabase,
-  getAllUserIds: getAllUserIds,
   authDatabaseController : {
     registerUserAuthTokens: registerUserAuthTokens
   },
@@ -234,7 +245,10 @@ module.exports = {
   societyDatabaseController : {
     getSocietyAvailability: getSocietyAvailability,
     setSocietyAvailability: setSocietyAvailability,
-    getUserAuthTokens: getUserAuthTokens
+    getAllSocietyMembers: getAllSocietyMembers,
+    getUserAuthTokens: getUserAuthTokens,
+    userInCommittee: userInCommittee,
+    getLastSyncTime: getLastSyncTime
   }
 };
 

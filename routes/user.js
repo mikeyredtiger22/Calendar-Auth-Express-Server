@@ -21,12 +21,4 @@ router.put('/', function (req, res) {
   });
 });
 
-// setTimeout(function () {
-//   // usersController.getAllUsersCalendarData(function (allUsersCalendarData) {
-//   //   console.log('allUsersCalendarData:');
-//   //   console.log(allUsersCalendarData);
-//   // });
-//   authController.getEventsAuth('***REMOVED***');
-// }, 100);
-
 module.exports = router;
