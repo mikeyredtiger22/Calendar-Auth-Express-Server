@@ -4,7 +4,7 @@ function getUserSocieties(userId, callback) {
   userDatabaseController.getUserObject(userId, callback);
 }
 
-function createSociety(userId, societyName, callback) { //todo callback with societyId
+function createSociety(userId, societyName, callback) {
   userDatabaseController.createSociety(userId, societyName, callback);
 }
 

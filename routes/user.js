@@ -5,7 +5,7 @@ var router = express.Router();
 /* GET user societies object */
 router.get('/', function(req, res) {
   userController.getUserObject(req.query.userId, function (userObject) {
-    res.return(userObject);
+    res.json(userObject);
   })
 });
 

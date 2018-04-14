@@ -29,12 +29,18 @@ function initDatabase(callback) {
     users.createIndex({_id: 1}, function (err, result) {
       if (err) throw err;
     });
+    societies.createIndex({_id: 1}, function (err, result) {
+      if (err) throw err;
+    });
 
     //Testing:
     // users.drop();
-
     users.find().toArray(function (err, result) {
-      console.log('users collection:');
+      console.log('\nusers collection:\n');
+      console.log(result);
+    });
+    societies.find().toArray(function (err, result) {
+      console.log('\nsocieties collection:\n');
       console.log(result);
     });
 
@@ -97,7 +103,7 @@ function createUserAuthTokens(userId, tokens, callback) {
  * @param callback
  */
 function updateUserAuthTokens(userId, tokens, callback) {
-	users.updateOne({_id: userId}, {$set: {tokens: tokens}}, null, function (err, result) {
+	users.updateOne({_id: userId}, {$set: {tokens: tokens}}, function (err, result) {
     if (err) handleError(err, callback);
     callback({success: true});
   });
@@ -143,16 +149,28 @@ function getUserObject(userId, callback) {
 }
 
 function createSociety(userId, societyName, callback) {
-  //todo
+  societies.insertOne({name: societyName, committee: [userId]}, function(err, result) {
+    if (err) handleError(err, callback);
+    var societyId = result.objectId;
+    users.updateOne({_id: userId}, {committees: societyId}, function(err, result) {
+      if (err) handleError(err, callback);
+      callback({societyId: societyId});
+    });
+  });
 }
 
 function joinSociety(userId, societyId, callback) {
-  //todo
+  societies.updateOne({_id: societyId}, {$push: {members: userId}}, function(err, result) {
+    if (err) handleError(err, callback);
+    users.updateOne({_id: userId}, {$push: {societies: societyId}}, function(err, result) {
+      if (err) handleError(err, callback);
+      callback({joined: true});
+    });
+  });
 }
 
 function getSocietyAvailability(societyId, callback) {
-  //if userId in society committee
-  //todo
+
 }
 
 // function getSocietyCommittee(userId, societyId) {
