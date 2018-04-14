@@ -135,14 +135,27 @@ function getUserObject(userId, callback) {
     if (err) handleError(err, callback);
     getAllSocieties(function (err, societies) {
       if (err) handleError(err, callback);
-      //available societies - all societies not joined
-      var available = societies.filter(function(society) {
-        return !user.societies.includes(society);
-      });
+
+      var joined = [];
+      var available = [];
+      var committees = [];
+      
+      for(var i=0; i<societies.length; i++) {
+        var currSociety = societies.get(i);
+        if (user.societies.includes(currSociety._id)) {
+          joined.push(currSociety);
+        } else {
+          available.push(currSociety);
+        }
+        if (user.committees.includes(currSociety._id)) {
+          committees.push(currSociety);
+        }
+      }
+
       callback({
-        joined: user.societies,
-        committees: user.committees,
-        available: available
+        joined: joined,
+        available: available,
+        committees: committees
       });
     });
   });
