@@ -1,4 +1,4 @@
-var usersController = require('../controllers/usersController');
+var userController = require('../controllers/userController');
 var authController = require('../controllers/authController');
 var express = require('express');
 var router = express.Router();
@@ -9,7 +9,7 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/all', function (req, res, next) {
-  usersController.getAllUsersCalendarData(function (allUsersCalendarData) {
+  userController.getAllUsersCalendarData(function (allUsersCalendarData) {
     res.send(allUsersCalendarData);
   });
 });

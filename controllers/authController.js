@@ -1,4 +1,4 @@
-var {authDatabaseController} = require('./database');
+var {authDatabaseController} = require('./databaseController');
 const {google} = require('googleapis');
 const CLIENT_ID = process.env.client_id;
 const CLIENT_SECRET = process.env.client_secret;

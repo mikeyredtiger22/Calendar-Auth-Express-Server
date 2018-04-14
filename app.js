@@ -1,4 +1,4 @@
-var database = require('./controllers/database'); //load database early
+var database = require('./controllers/databaseController'); //load database early
 
 var express = require('express');
 var path = require('path');
@@ -8,7 +8,7 @@ var cors = require('cors');
 
 var indexRouter = require('./routes/index'); //no real need - landing page for api
 var authRouter = require('./routes/auth'); //all methods using Auth Controller
-var usersRouter = require('./routes/users'); //all methods using Users Controller
+var usersRouter = require('./routes/users'); //all methods using User Controller
 // var societyRouter = require('./routes/society'); //all methods using Society Controller
 
 var app = express();

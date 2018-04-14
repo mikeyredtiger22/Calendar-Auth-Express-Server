@@ -1,4 +1,4 @@
-var database = require('./database');
+var database = require('./databaseController');
 var authController = require('./authController');
 
 function getAllUsersCalendarData(callback) {
