@@ -22,11 +22,6 @@ function initDatabase(callback) {
       if (err) throw err;
     });
 
-
-    usersAvailability = db.collection("usersAvailability", function (err, res) {
-      if (err) throw err;
-    });
-
     //Indexes
     users.createIndex({_id: 1}, function (err, result) {
       if (err) throw err;
@@ -35,7 +30,7 @@ function initDatabase(callback) {
 
     //Testing:
     // users.drop();
-    usersAvailability.drop();
+
     users.find().toArray(function (err, result) {
       console.log('users collection:');
       console.log(result);
@@ -53,7 +48,7 @@ function initDatabase(callback) {
  * @param userId
  * @param tokens
  */
-function registerUserAuthTokens(userId, tokens) {
+function registerUserAuthTokens(userId, tokens, callback) {
   users.find({_id: userId}).count(function (err, count) {
   	if (err) throw err;
   	// console.log(result);
@@ -71,7 +66,7 @@ function registerUserAuthTokens(userId, tokens) {
  * @param userId
  * @param tokens
  */
-function createUserAuthTokens(userId, tokens) {
+function createUserAuthTokens(userId, tokens, callback) {
 	users.insertOne({_id: userId, tokens: tokens}, function (err, res) {
 		if (err) throw err;
 		// console.log(res);
@@ -83,7 +78,7 @@ function createUserAuthTokens(userId, tokens) {
  * @param userId
  * @param tokens
  */
-function updateUserAuthTokens(userId, tokens) {
+function updateUserAuthTokens(userId, tokens, callback) {
 	users.updateOne({_id: userId}, {$set: {tokens: tokens}}, null, function (err, result) {
 		if (err) throw err;
 		// console.log('update token callback:');
@@ -104,13 +99,13 @@ function getUserAuthTokens(userId, callback) {
 }
 
 /**
- * Returns societies object for logged in user.
+ * Returns user object for logged in user.
  * Includes joined societies, committees and available societies.
  * @param userId
  * @param callback {joined: [societies], committees: [societies], available: [societies]}
  */
-function getUserSocieties(userId, callback) {
-  getUserObject(userId, function (user) {
+function getUserObject(userId, callback) {
+  getUser(userId, function (user) {
     getAllSocieties(function (societies) {
       //available societies - all societies not joined
       var available = societies.filter(function(society) {
@@ -130,7 +125,7 @@ function getUserSocieties(userId, callback) {
  * @param userId
  * @param callback
  */
-function getUserObject(userId, callback) {
+function getUser(userId, callback) {
   users.findOne({_id: userId}, function (err, user) {
     if (err) throw err;
     callback(user);
@@ -147,15 +142,15 @@ function getAllSocieties(callback) {
   })
 }
 
-function createSociety(userId, societyName) {
+function createSociety(userId, societyName, callback) {
   //todo
 }
 
-function joinSociety(userId, societyId) {
+function joinSociety(userId, societyId, callback) {
   //todo
 }
 
-function getSocietyAvailability(societyId) {
+function getSocietyAvailability(societyId, callback) {
   //if userId in society committee
   //todo
 }
@@ -164,7 +159,7 @@ function getSocietyAvailability(societyId) {
 //   //if userId in society committee
 // }
 
-function setSocietyAvailability(societyId) {
+function setSocietyAvailability(societyId, callback) {
   //todo
 }
 /**
@@ -185,17 +180,17 @@ module.exports = {
   initDatabase: initDatabase,
   getAllUserIds: getAllUserIds,
   authDatabaseController : {
-    registerUserAuthTokens: registerUserAuthTokens,
-    getUserAuthTokens: getUserAuthTokens
+    registerUserAuthTokens: registerUserAuthTokens
   },
   userDatabaseController : {
-    getUserSocieties: getUserSocieties,
+    getUserObject: getUserObject,
     createSociety: createSociety,
-    joinSociety, joinSociety
+    joinSociety: joinSociety
   },
   societyDatabaseController : {
     getSocietyAvailability: getSocietyAvailability,
-    setSocietyAvailability: setSocietyAvailability
+    setSocietyAvailability: setSocietyAvailability,
+    getUserAuthTokens: getUserAuthTokens
   }
 };
 

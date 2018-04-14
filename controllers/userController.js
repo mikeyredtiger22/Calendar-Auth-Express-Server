@@ -1,30 +1,44 @@
-var database = require('./databaseController');
-var authController = require('./authController');
+var {userDatabaseController} = require('./databaseController');
 
-function getAllUsersCalendarData(callback) {
-  database.getAllUserIds(function (userIds) {
-    var usersToSync = userIds.length;
-    var allCalendarData = [];
-    //For each user:
-    userIds.forEach(function (userId) {
-      authController.next3Events(userId, function (userCalendarData) {
-        allCalendarData = allCalendarData.concat(userCalendarData);
-        usersToSync--;
-        if (usersToSync === 0) {
-          callback(allCalendarData);
-        }
-      });
-    });
-  });
+function getUserSocieties(userId, callback) {
+  userDatabaseController.getUserObject(userId, callback);
 }
 
-function syncUserCalendarData(userId) {
-  //if synced before:
-    //re-sync
-  //else:
-    //init syc
+function createSociety(userId, societyName, callback) { //todo callback with societyId
+  userDatabaseController.createSociety(userId, societyName, callback);
 }
+
+function joinSociety(userId, societyId, callback) {
+  userDatabaseController.joinSociety(userId, societyId, callback);
+}
+
+
+// function getAllUsersCalendarData(callback) {
+//   database.getAllUserIds(function (userIds) {
+//     var usersToSync = userIds.length;
+//     var allCalendarData = [];
+//     //For each user:
+//     userIds.forEach(function (userId) {
+//       authController.next3Events(userId, function (userCalendarData) {
+//         allCalendarData = allCalendarData.concat(userCalendarData);
+//         usersToSync--;
+//         if (usersToSync === 0) {
+//           callback(allCalendarData);
+//         }
+//       });
+//     });
+//   });
+// }
+//
+// function syncUserCalendarData(userId) {
+//   //if synced before:
+//     //re-sync
+//   //else:
+//     //init syc
+// }
 
 module.exports = {
-  getAllUsersCalendarData: getAllUsersCalendarData
+  getUserObject: getUserSocieties,
+  createSociety: createSociety,
+  joinSociety: joinSociety
 };

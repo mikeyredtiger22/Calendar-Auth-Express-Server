@@ -7,9 +7,9 @@ var logger = require('morgan');
 var cors = require('cors');
 
 var indexRouter = require('./routes/index'); //no real need - landing page for api
-var authRouter = require('./routes/auth'); //all methods using Auth Controller
-var usersRouter = require('./routes/users'); //all methods using User Controller
-// var societyRouter = require('./routes/society'); //all methods using Society Controller
+var authRouter = require('./routes/auth'); //user authentication
+var userRouter = require('./routes/user'); //all methods accessible for a logged in user
+var societyRouter = require('./routes/society'); //all methods accessible for a committee member of a society
 
 var app = express();
 app.use(cors({credentials: true, origin: true}));
@@ -22,7 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
-app.use('/users', usersRouter);
-// app.user('/society', societyRouter);
+app.use('/user', userRouter);
+app.use('/society', societyRouter);
 
 module.exports = app;

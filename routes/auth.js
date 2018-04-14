@@ -12,7 +12,9 @@ router.get('/', function(req, res, next) {
 	console.log('received auth code response');
 	res.redirect(FRONT_END_REDIRECT_URL);
 	var authCode = req.query.code;
-	authController.registerUserAuthTokens(authCode);
+	authController.registerUserAuthTokens(authCode, function (response) {
+    //todo callback
+  });
 });
 
 module.exports = router;
