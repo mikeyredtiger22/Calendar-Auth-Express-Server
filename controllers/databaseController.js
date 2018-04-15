@@ -7,72 +7,66 @@ var url = "mongodb://localhost:27017";
 var users;
 var societies;
 
-initDatabase();
+//Initiate database and collections
+MongoClient.connect(url, function (err, client) {
+  if (err) throw err;
+  var db = client.db('db');
+
+  users = db.collection("users", function (err, res) {
+    if (err) throw err;
+  });
+  societies = db.collection("societies", function (err, res) {
+    if (err) throw err;
+  });
+
+  //Index collections by _id
+  users.createIndex({_id: 1}, function (err, result) {
+    if (err) throw err;
+  });
+  societies.createIndex({_id: 1}, function (err, result) {
+    if (err) throw err;
+  });
+
+  //Outputs database contents on initiation
+  users.find().toArray(function (err, result) {
+    console.log('\nusers collection:\n');
+    console.log(result);
+  });
+  societies.find().toArray(function (err, result) {
+    console.log('\nsocieties collection:\n');
+    console.log(result);
+  });
+});
 
 /**
- * Initiate database and collections, calls callback after initiation
+ * Usage: if (handleError(err, callback)) return;
+ * Handles general error by outputting error message to standard error, calling callback
+ * with error message and exiting calling function.
+ * @param error
  * @param callback
  */
-function initDatabase(callback) {
-	// console.log('db init start');
-  MongoClient.connect(url, function (err, client) {
-    if (err) throw err;
-    var db = client.db('db');
-
-    users = db.collection("users", function (err, res) {
-      if (err) throw err;
-    });
-    societies = db.collection("societies", function (err, res) {
-      if (err) throw err;
-    });
-
-    //Indexes
-    users.createIndex({_id: 1}, function (err, result) {
-      if (err) throw err;
-    });
-    societies.createIndex({_id: 1}, function (err, result) {
-      if (err) throw err;
-    });
-
-    //Testing:
-    var REMOVE_SOCIETIES = false;
-    // users.drop();
-    // societies.drop();
-    users.find().toArray(function (err, result) {
-      console.log('\nusers collection:\n');
-      console.log(result);
-    });
-    societies.find().toArray(function (err, result) {
-      console.log('\nsocieties collection:\n');
-      console.log(result);
-    });
-
-    if (REMOVE_SOCIETIES) {
-      setTimeout(function () {
-        users.updateOne({_id: 'xxx'}, {$set: {committees: [], societies: []}},
-          function (err, response) {
-            if (err) console.error(err);
-          });
-      }, 200);
-    }
-
-    // console.log('db init done');
-		if (callback) {
-      callback();
-		}
-  });
-}
-
-//HELPER METHODS todo comment docs
 function handleError(error, callback) {
-  console.error(error);
-  if (callback) callback(error);
+  if (error) {
+    console.error(error);
+    if (callback) callback(error);
+    return true;
+  }
+  return false;
 }
 
+/**
+ * Returns user with userId
+ * @param userId
+ * @param callback
+ */
 function getUser(userId, callback) {
   users.findOne({_id: userId}, callback);
 }
 
+/**
+ * Returns array of all societies
+ * @param callback
+ */
 function getAllSocieties(callback) {
   societies.find({}, {projection: {_id: 1, name: 1}}).toArray(callback);
 }
@@ -85,12 +79,11 @@ function getAllSocieties(callback) {
  */
 function registerUserAuthTokens(userId, tokens, callback) {
   users.find({_id: userId}).count(function (err, count) {
-  	if (err) handleError(err, callback);
+    if (handleError(err, callback)) return;
     if (count !== 0) {
-      //todo add separate if many accounts on one google profile
       updateUserAuthTokens(userId, tokens, callback);
     } else {
-    	createUserAuthTokens(userId, tokens, callback);
+      createUserAuthTokens(userId, tokens, callback);
     }
   });
 }
@@ -102,10 +95,10 @@ function registerUserAuthTokens(userId, tokens, callback) {
  * @param callback
  */
 function createUserAuthTokens(userId, tokens, callback) {
-	users.insertOne({_id: userId, tokens: tokens}, function (err, res) {
-    if (err) handleError(err, callback);
+  users.insertOne({_id: userId, tokens: tokens}, function (err, res) {
+    if (handleError(err, callback)) return;
     callback({newUser: userId});
-	});
+  });
 }
 
 /**
@@ -115,8 +108,8 @@ function createUserAuthTokens(userId, tokens, callback) {
  * @param callback
  */
 function updateUserAuthTokens(userId, tokens, callback) {
-	users.updateOne({_id: userId}, {$set: {tokens: tokens}}, function (err, result) {
-    if (err) handleError(err, callback);
+  users.updateOne({_id: userId}, {$set: {tokens: tokens}}, function (err, result) {
+    if (handleError(err, callback)) return;
     callback({updatedAuth: userId});
   });
 }
@@ -124,15 +117,15 @@ function updateUserAuthTokens(userId, tokens, callback) {
 /**
  * Get user authentication object. Callback with user auth tokens.
  * @param userId
- * @param callback (user auth tokens)
+ * @param callback
  */
 function getUserAuthTokens(userId, callback) {
-	getUser(userId, function (err, user) {
-		if (err) {
-		  handleError(err);
-		  callback(null);
+  getUser(userId, function (err, user) {
+    if (handleError(err)) {
+      callback(null);
+      return;
     }
-		callback(user.tokens);
+    callback(user.tokens);
   });
 }
 
@@ -140,20 +133,20 @@ function getUserAuthTokens(userId, callback) {
  * Returns user object for logged in user.
  * Includes joined societies, committees and available societies.
  * @param userId
- * @param callback {joined: [societies], committees: [societies], available: [societies]} or error
+ * @param callback with error or: {joined: [societies], committees: [societies], available: [societies]}
  */
 function getUserObject(userId, callback) {
   getUser(userId, function (err, user) {
     console.log(user);
-    if (err) handleError(err, callback);
+    if (handleError(err, callback)) return;
     getAllSocieties(function (err, societies) {
-      if (err) handleError(err, callback);
+      if (handleError(err, callback)) return;
 
       var joined = [];
       var available = [];
       var committees = [];
 
-      for(var i=0; i<societies.length; i++) {
+      for (var i = 0; i < societies.length; i++) {
         var currSociety = societies[i];
         if (user.societies.includes(currSociety._id)) {
           joined.push(currSociety);
@@ -174,75 +167,115 @@ function getUserObject(userId, callback) {
   });
 }
 
+/**
+ * Create new society in database. User is automatically added to committee of society.
+ * @param userId
+ * @param societyName
+ * @param callback
+ */
 function createSociety(userId, societyName, callback) {
-  societies.insertOne({_id: String(ObjectID()), name: societyName, committee: [userId]}, function(err, result) {
-    if (err) handleError(err, callback);
+  societies.insertOne({_id: String(ObjectID()), name: societyName, committee: [userId]}, function (err, result) {
+    if (handleError(err, callback)) return;
     var societyId = result.insertedId;
-    users.updateOne({_id: userId}, {$push: {committees: societyId}}, function(err, result) {
-      if (err) handleError(err, callback);
+    users.updateOne({_id: userId}, {$push: {committees: societyId}}, function (err, result) {
+      if (handleError(err, callback)) return;
       callback({societyId: societyId});
     });
   });
 }
 
+/**
+ * Add user to society members.
+ * @param userId
+ * @param societyId
+ * @param callback
+ */
 function joinSociety(userId, societyId, callback) {
-  societies.updateOne({_id: societyId}, {$push: {members: userId}}, function(err, result) {
-    if (err) handleError(err, callback);
-    users.updateOne({_id: userId}, {$push: {societies: societyId}}, function(err, result) {
-      if (err) handleError(err, callback);
+  societies.updateOne({_id: societyId}, {$push: {members: userId}}, function (err, result) {
+    if (handleError(err, callback)) return;
+    users.updateOne({_id: userId}, {$push: {societies: societyId}}, function (err, result) {
+      if (handleError(err, callback)) return;
       callback({joined: true});
     });
   });
 }
 
+/**
+ * Returns boolean: true if user is in committee of society.
+ * @param userId
+ * @param societyId
+ * @param callback
+ */
 function userInCommittee(userId, societyId, callback) {
   societies.findOne({_id: societyId}, {fields: {_id: 0, committee: 1}}, function (err, {committee}) {
-    if (err) handleError(err, callback);
+    if (handleError(err)) {
+      callback(false);
+      return;
+    }
     callback(committee.includes(userId));
   });
 }
 
+/**
+ * Returns sync date of last society availability sync.
+ * @param societyId
+ * @param callback
+ */
 function getLastSyncTime(societyId, callback) {
   societies.findOne({_id: societyId}, {fields: {_id: 0, lastSyncTime: 1}}, function (err, {lastSyncTime}) {
-    if (err) handleError(err, callback);
+    if (handleError(err)) {
+      callback(null);
+      return;
+    }
     callback(lastSyncTime);
   });
 }
 
+/**
+ * Returns cached society availability.
+ * @param societyId
+ * @param callback
+ */
 function getSocietyAvailability(societyId, callback) {
 
 }
 
-// function getSocietyCommittee(userId, societyId) {
-//   //if userId in society committee
-// }
-
-function setSocietyAvailability(societyId, callback) {
-  //todo
+/**
+ * Caches society availability and sync date in database.
+ * @param societyId
+ * @param societyAvailability
+ * @param syncDate
+ */
+function setSocietyAvailability(societyId, societyAvailability, syncDate) {
+  societies.updateOne({_id: societyId},
+    {$set: {availability: societyAvailability, lastSyncDate: syncDate}},
+    function (err) {
+    handleError(err);
+  });
 }
+
 /**
  * Callback with array of all members in society.
  * @param societyId
- * @param callback (array of userIds)
+ * @param callback
  */
 function getAllSocietyMembers(societyId, callback) {
-  societies.findOne({_id: societyId}, {fields: {_id: 0, members: 1}}, function(err, {members}) {
-    if (err) handleError(err, callback);
-    callback(members);
+  societies.findOne({_id: societyId}, {fields: {_id: 0, members: 1}}, function (err, {members}) {
+    if (handleError(err, callback)) return;
+    callback(null, members);
   });
 }
 
 module.exports = {
-  initDatabase: initDatabase,
-  authDatabaseController : {
+  authDatabaseController: {
     registerUserAuthTokens: registerUserAuthTokens
   },
-  userDatabaseController : {
+  userDatabaseController: {
     getUserObject: getUserObject,
     createSociety: createSociety,
     joinSociety: joinSociety
   },
-  societyDatabaseController : {
+  societyDatabaseController: {
     getSocietyAvailability: getSocietyAvailability,
     setSocietyAvailability: setSocietyAvailability,
     getAllSocietyMembers: getAllSocietyMembers,

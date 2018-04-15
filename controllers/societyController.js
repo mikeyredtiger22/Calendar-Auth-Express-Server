@@ -26,7 +26,9 @@ function getSocietyAvailability(userId, societyId, callback) {
     var oneDayAgo = date.setDate(date.getDate() - 1);
     societyDatabaseController.getLastSyncTime(societyId, function (lastSyncTime) {
       if (lastSyncTime && lastSyncTime < oneDayAgo) {
-        societyDatabaseController.getSocietyAvailability(societyId, callback);
+        societyDatabaseController.getSocietyAvailability(societyId, function (societyAvailability) {
+          //todo
+        });
       } else {
         syncSocietyAvailability(societyId, callback);
       }
@@ -48,11 +50,14 @@ function getUserAuth(userId, callback) {
 
 /**
  * todo comment docs
+ * todo refactor methods (sync)
+ * todo reduce duplicate object creation: create in separate function, called by common parent and pass object
  * @param societyId
  * @param callback
  */
 function syncSocietyAvailability(societyId, callback) {
-  societyDatabaseController.getAllSocietyMembers(societyId, function (userIds) {
+  societyDatabaseController.getAllSocietyMembers(societyId, function (err, userIds) {
+    if (err) callback(err);
     syncAllUsersAvailability(userIds, function (allUsersAvailability) {
       console.log('allUsersAvailability');
       console.log(allUsersAvailability);
@@ -94,7 +99,7 @@ function syncSocietyAvailability(societyId, callback) {
 function syncAllUsersAvailability(userIds, callback) {
   var allUsersAvailability = [];
   //sync each user availability and collect all users data
-  async.each(userIds, //todo refactor
+  async.each(userIds,
     function (userId, taskFinished) { //todo: each method must call taskFinished on error / no result
       getUserAuth(userId, function (auth) {
         getUserFreeBusyData(auth, function (freeBusyData, queryStartDate) {
