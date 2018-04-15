@@ -83,9 +83,11 @@ function syncSocietyAvailability(societyId, callback) {
             callback(err);
             return;
           }
+          //return calculations to caller (front end):
           callback(societyAvailability);
-          console.log(societyAvailability);
-          //Store / overwrite availability with time of sync in database
+          //store/cache calculations in database:
+          var syncDate = new Date();
+          societyDatabaseController.setSocietyAvailability(societyId, societyAvailability, syncDate);
         });
     });
   });

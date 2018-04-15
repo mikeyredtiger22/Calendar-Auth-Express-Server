@@ -39,16 +39,32 @@ MongoClient.connect(url, function (err, client) {
 });
 
 /**
- * Usage: if (handleError(err, callback)) return;
- * Handles general error by outputting error message to standard error, calling callback
- * with error message and exiting calling function.
+ * Handles database errors elegantly.
+ * Usages:
+ *   A: handleError(err);
+ *   B: if (handleError(err)) return;
+ *   C: if (handleError(err, callback)) return;
+ *   D: if (handleError(err, callback, callbackArgument)) return;
+ *
+ * Functionality description:
+ * A,B,C,D: Output error message to standard error.
+ *   B,C,D: Exit calling function if error.
+ *     C  : Call callback with error.
+ *       D: Call callback with specified callback argument.
  * @param error
  * @param callback
+ * @param callbackArgument
  */
-function handleError(error, callback) {
+function handleError(error, callback, callbackArgument) {
   if (error) {
     console.error(error);
-    if (callback) callback(error);
+    if (callback) {
+      if (callbackArgument) {
+        callback(callbackArgument);
+      } else {
+        callback(error);
+      }
+    }
     return true;
   }
   return false;
