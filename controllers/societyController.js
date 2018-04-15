@@ -54,6 +54,8 @@ function getUserAuth(userId, callback) {
 function syncSocietyAvailability(societyId, callback) {
   societyDatabaseController.getAllSocietyMembers(societyId, function (userIds) {
     syncAllUsersAvailability(userIds, function (allUsersAvailability) {
+      console.log('allUsersAvailability');
+      console.log(allUsersAvailability);
       //Collect into chart info
       //Store / overwrite availability (with timestamp)
       //Return availability in callback
@@ -69,14 +71,20 @@ function syncSocietyAvailability(societyId, callback) {
 function syncAllUsersAvailability(userIds, callback) {
   var allUsersAvailability = [];
   //sync each user availability and collect all users data
-  async.each(userIds,
-    function (userId, taskFinished) {
+  async.each(userIds, //todo refactor
+    function (userId, taskFinished) { //todo: each method must call taskFinished on error / no result
       getUserAuth(userId, function (auth) {
-        syncUserAvailability(auth, function (userAvailability) {
-          allUsersAvailability.push(userAvailability);
+        getUserFreeBusyData(auth, function (freeBusyData, queryStartDate) {
+          if (!freeBusyData) {
+            taskFinished(); //todo pass err
+          } else {
+            getUserAvailabilityArray(freeBusyData, queryStartDate, function (userAvailability) {
+              allUsersAvailability.push(userAvailability);
+              taskFinished(); //todo pass err
+            });
+          }
         });
       });
-      taskFinished(); //todo pass err
     },
     function (err) {
       if (err) {
@@ -88,21 +96,62 @@ function syncAllUsersAvailability(userIds, callback) {
     });
 }
 
-function syncUserAvailability(auth, callback) {
-  var freeBusyApi = google.calendar({version: 'v3', auth}).freebusy.query;
+function getUserFreeBusyData(auth, callback) {
   var dateStart = new Date(); //current date
   var dateEnd = new Date();
   dateEnd.setDate(dateEnd.getDate() + 14); //2 weeks ahead
-  var apiOptions = { resource: {
-    items: [{'id': 'primary'}],
-    timeMin: dateStart.toISOString(),
-    timeMax: dateEnd.toISOString()
-  }};
+
+  var freeBusyApi = google.calendar({version: 'v3', auth}).freebusy.query;
+  var apiOptions = {
+    resource: {
+      items: [{'id': 'primary'}],
+      timeMin: dateStart.toISOString(),
+      timeMax: dateEnd.toISOString()
+    }
+  };
+
   freeBusyApi(apiOptions, function (err, result) {
+    if (err) {
+      console.error(err);
+      return;
+    }
     console.log('free busy result:');
-    console.log(result.data.calendars.primary);
-    callback(result);
+    console.log(result.data.calendars.primary.busy);
+    if (result.data.calendars.primary.busy.length > 0) {
+      callback(result.data.calendars.primary.busy, dateStart);
+    } else {
+      callback(null);
+    }
   });
+}
+
+function getUserAvailabilityArray(events, queryStartDate, callback) {
+  //Search Queries:
+  const DAYS = 7; //one week
+  const START_HOUR = 8; //todo timezone
+  const END_HOUR = 22;
+  const SLOTS_IN_DAY = END_HOUR - START_HOUR;
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+  var daysSinceStartDay, hoursSinceStartHour, startDate, endDate, startSlot, endSlot;
+  var availability = Array(SLOTS_IN_DAY * DAYS).fill(true);
+  for (var i = 0; i < events.length; i++) {
+    var {start, end} = events[i];
+    startDate = new Date(start);
+    endDate = new Date(end);
+
+    daysSinceStartDay = Math.floor((startDate.getTime() - queryStartDate.getTime()) / MS_PER_DAY);
+    hoursSinceStartHour = startDate.getUTCHours() - START_HOUR;
+    startSlot = (daysSinceStartDay * SLOTS_IN_DAY) + hoursSinceStartHour;
+
+    daysSinceStartDay = Math.floor((endDate.getTime() - queryStartDate.getTime()) / MS_PER_DAY);
+    hoursSinceStartHour = endDate.getUTCHours() - START_HOUR;
+    endSlot = (daysSinceStartDay * SLOTS_IN_DAY) + hoursSinceStartHour;
+    if (endDate.getUTCMinutes() > 0) endSlot++;
+
+    availability.fill(false, startSlot, endSlot + 1); //+1 because endIndex is non-inclusive
+  }
+  callback(availability);
 }
 
 module.exports = {
