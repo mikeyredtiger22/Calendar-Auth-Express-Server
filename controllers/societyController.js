@@ -47,7 +47,7 @@ function getUserAuth(userId, callback) {
 }
 
 /**
- *
+ * todo comment docs
  * @param societyId
  * @param callback
  */
@@ -56,9 +56,32 @@ function syncSocietyAvailability(societyId, callback) {
     syncAllUsersAvailability(userIds, function (allUsersAvailability) {
       console.log('allUsersAvailability');
       console.log(allUsersAvailability);
-      //Collect into chart info
-      //Store / overwrite availability (with timestamp)
-      //Return availability in callback
+      const DAYS = 7;
+      const START_HOUR = 8;
+      const END_HOUR = 22;
+      const SLOTS_IN_DAY = END_HOUR - START_HOUR;
+
+      var societyAvailability = Array(SLOTS_IN_DAY * DAYS).fill(0);
+
+      async.each(allUsersAvailability,
+        function (userAvailability, taskFinished) {
+          for (var slot = 0; slot < SLOTS_IN_DAY * DAYS; slot++) {
+            if (userAvailability[slot]) {
+              societyAvailability[slot]++;
+            }
+          }
+          taskFinished();
+        },
+        function (err) {
+          if (err) {
+            console.error(err);
+            callback(err);
+            return;
+          }
+          callback(societyAvailability);
+          console.log(societyAvailability);
+          //Store / overwrite availability with time of sync in database
+        });
     });
   });
 }
