@@ -8,6 +8,7 @@ const REDIRECT_URL = process.env.redirect_url;
 
 const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
 
+//todo add error handler function to society controller
 
 /**
  * If last availability sync was less than one day ago, returns last sync.
@@ -47,6 +48,10 @@ function getSocietyAvailability(userId, societyId, callback) {
  */
 function getUserAuth(userId, callback) {
   societyDatabaseController.getUserAuthTokens(userId, function (tokens) {
+    if (!tokens) {
+      callback(null);
+      return;
+    }
     oauth2Client.setCredentials(tokens);
     callback(oauth2Client);
   });
@@ -61,9 +66,16 @@ function getUserAuth(userId, callback) {
  */
 function syncSocietyAvailability(societyId, callback) {
   societyDatabaseController.getAllSocietyMembers(societyId, function (err, userIds) {
-    if (err) callback(err);
+    if (err) {
+      callback(err);
+      return;
+    }
+    if (!userIds) {
+      callback({'error': 'No members found in society.'});
+      return;
+    }
     syncAllUsersAvailability(userIds, function (allUsersAvailability) {
-      console.log('allUsersAvailability');
+      console.log('allUsersAvailability:');
       console.log(allUsersAvailability);
       const DAYS = 7;
       const START_HOUR = 8;
@@ -106,24 +118,30 @@ function syncAllUsersAvailability(userIds, callback) {
   var allUsersAvailability = [];
   //sync each user availability and collect all users data
   async.each(userIds,
-    function (userId, taskFinished) { //todo: each method must call taskFinished on error / no result
+    function (userId, taskFinished) {
       getUserAuth(userId, function (auth) {
+        if (!auth) {
+          console.error({'error': 'User auth tokens not found in database'});
+          taskFinished();
+          return;
+        }
         getUserFreeBusyData(auth, function (freeBusyData, queryStartDate) {
           if (!freeBusyData) {
-            taskFinished(); //todo pass err
-          } else {
-            getUserAvailabilityArray(freeBusyData, queryStartDate, function (userAvailability) {
-              allUsersAvailability.push(userAvailability);
-              taskFinished(); //todo pass err
-            });
+            console.error({'error': 'No free busy data retrieved from user calendar'});
+            taskFinished();
+            return;
           }
+          getUserAvailabilityArray(freeBusyData, queryStartDate, function (userAvailability) {
+            allUsersAvailability.push(userAvailability);
+            taskFinished();
+          });
         });
       });
     },
     function (err) {
       if (err) {
         console.error(err);
-        callback(err);
+        callback(null);
         return;
       }
       callback(allUsersAvailability);
@@ -147,6 +165,7 @@ function getUserFreeBusyData(auth, callback) {
   freeBusyApi(apiOptions, function (err, result) {
     if (err) {
       console.error(err);
+      callback(null);
       return;
     }
     console.log('free busy result:');

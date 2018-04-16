@@ -21,7 +21,8 @@ function registerUserAuthTokens(authCode, callback) {
 		oauth2Client.getTokenInfo(tokenResponse.tokens.access_token).then(function (tokenInfo) {
 			var userId = tokenInfo.sub;
 			if (!userId) {
-				console.error("No 'sub' field for user token returned. Make sure to request 'profile' scope");
+				console.error("No 'sub' field for user token returned. Make sure to request 'profile' scope.");
+				callback({'error': "No 'sub' field for user token returned. Make sure to request 'profile' scope."})
 			} else {
         authDatabaseController.registerUserAuthTokens(userId, tokenResponse.tokens, callback);
 			}
