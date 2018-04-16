@@ -24,10 +24,14 @@ function getSocietyAvailability(userId, societyId, callback) {
     }
     var date = new Date();
     var oneDayAgo = date.setDate(date.getDate() - 1);
-    societyDatabaseController.getLastSyncTime(societyId, function (lastSyncTime) {
-      if (lastSyncTime && lastSyncTime < oneDayAgo) {
+    societyDatabaseController.getLastSyncDate(societyId, function (lastSyncDate) {
+      if (lastSyncDate && (new Date(lastSyncDate)) > oneDayAgo) {
         societyDatabaseController.getSocietyAvailability(societyId, function (societyAvailability) {
-          //todo
+          if (societyAvailability !== null) {
+            callback(societyAvailability);
+          } else {
+            syncSocietyAvailability(societyId, callback);
+          }
         });
       } else {
         syncSocietyAvailability(societyId, callback);

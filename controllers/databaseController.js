@@ -137,10 +137,7 @@ function updateUserAuthTokens(userId, tokens, callback) {
  */
 function getUserAuthTokens(userId, callback) {
   getUser(userId, function (err, user) {
-    if (handleError(err)) {
-      callback(null);
-      return;
-    }
+    if (handleError(err, callback, null)) return;
     callback(user.tokens);
   });
 }
@@ -224,10 +221,7 @@ function joinSociety(userId, societyId, callback) {
  */
 function userInCommittee(userId, societyId, callback) {
   societies.findOne({_id: societyId}, {fields: {_id: 0, committee: 1}}, function (err, {committee}) {
-    if (handleError(err)) {
-      callback(false);
-      return;
-    }
+    if (handleError(err, callback, false)) return;
     callback(committee.includes(userId));
   });
 }
@@ -237,13 +231,10 @@ function userInCommittee(userId, societyId, callback) {
  * @param societyId
  * @param callback
  */
-function getLastSyncTime(societyId, callback) {
-  societies.findOne({_id: societyId}, {fields: {_id: 0, lastSyncTime: 1}}, function (err, {lastSyncTime}) {
-    if (handleError(err)) {
-      callback(null);
-      return;
-    }
-    callback(lastSyncTime);
+function getLastSyncDate(societyId, callback) {
+  societies.findOne({_id: societyId}, {fields: {_id: 0, lastSyncDate: 1}}, function (err, {lastSyncDate}) {
+    if (handleError(err, callback, null)) return;
+    callback(lastSyncDate);
   });
 }
 
@@ -253,7 +244,10 @@ function getLastSyncTime(societyId, callback) {
  * @param callback
  */
 function getSocietyAvailability(societyId, callback) {
-
+  societies.findOne({_id: societyId}, {fields: {_id: 0, availability: 1}}, function (err, {availability}) {
+    if (handleError(err, callback, null)) return;
+      callback(availability);
+  });
 }
 
 /**
@@ -297,7 +291,7 @@ module.exports = {
     getAllSocietyMembers: getAllSocietyMembers,
     getUserAuthTokens: getUserAuthTokens,
     userInCommittee: userInCommittee,
-    getLastSyncTime: getLastSyncTime
+    getLastSyncDate: getLastSyncDate
   }
 };
 
