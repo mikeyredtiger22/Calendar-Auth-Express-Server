@@ -24,10 +24,14 @@ function registerUserAuthTokens(authCode, callback) {
 				console.error("No 'sub' field for user token returned. Make sure to request 'profile' scope.");
 				callback({'error': "No 'sub' field for user token returned. Make sure to request 'profile' scope."})
 			} else {
-        authDatabaseController.registerUserAuthTokens(userId, tokenResponse.tokens, callback);
+				authDatabaseController.registerUserAuthTokens(userId, tokenResponse.tokens, callback);
 			}
-		});
-	});
+		}).catch(function (err) {
+			console.error(err);
+    });
+	}).catch(function (err) {
+    console.error(err);
+  });
 }
 
 module.exports = {

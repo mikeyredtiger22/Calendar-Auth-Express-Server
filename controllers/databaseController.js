@@ -113,7 +113,7 @@ function registerUserAuthTokens(userId, tokens, callback) {
 function createUserAuthTokens(userId, tokens, callback) {
   users.insertOne({_id: userId, tokens: tokens}, function (err, res) {
     if (handleError(err, callback)) return;
-    callback({newUser: userId});
+    callback({newUser: true, userId: userId});
   });
 }
 
@@ -126,7 +126,7 @@ function createUserAuthTokens(userId, tokens, callback) {
 function updateUserAuthTokens(userId, tokens, callback) {
   users.updateOne({_id: userId}, {$set: {tokens: tokens}}, function (err, result) {
     if (handleError(err, callback)) return;
-    callback({updatedAuth: userId});
+    callback({updatedAuth: true, userId: userId});
   });
 }
 
