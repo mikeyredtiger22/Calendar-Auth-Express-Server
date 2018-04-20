@@ -25,8 +25,8 @@ function getSocietyAvailability(userId, societyId, callback) {
     }
     var date = new Date();
     var oneDayAgo = date.setDate(date.getDate() - 1);
-    societyDatabaseController.getLastSyncDate(societyId, function (lastSyncDate) {
-      if (lastSyncDate && (new Date(lastSyncDate)) > oneDayAgo) {
+    societyDatabaseController.getLastSyncDate(societyId, function (syncDate) {
+      if (syncDate && (new Date(syncDate)) > oneDayAgo) {
         societyDatabaseController.getSocietyAvailability(societyId, function (societyAvailability) {
           if (societyAvailability !== null) {
             callback(societyAvailability);
@@ -74,21 +74,22 @@ function syncSocietyAvailability(societyId, callback) {
       callback({'error': 'No members found in society.'});
       return;
     }
-    syncAllUsersAvailability(userIds, function (allUsersAvailability) {
+
+    var startDate = new Date(); //current date
+    startDate.setUTCMinutes(0, 0, 0);
+    var endDate = new Date();
+    endDate.setDate(endDate.getDate() + 14); //2 weeks ahead
+
+    syncAllUsersAvailability(userIds, startDate, endDate, function (allUsersAvailability) {
       console.log('allUsersAvailability:');
       console.log(allUsersAvailability);
-      const DAYS = 7;
-      const START_HOUR = 8;
-      const END_HOUR = 22;
-      const SLOTS_IN_DAY = END_HOUR - START_HOUR;
-
-      var societyAvailability = Array(SLOTS_IN_DAY * DAYS).fill(0);
+      var societyAvailability = Array(24 * 14).fill(0);
 
       async.each(allUsersAvailability,
         function (userAvailability, taskFinished) {
-          for (var slot = 0; slot < SLOTS_IN_DAY * DAYS; slot++) {
-            if (userAvailability[slot]) {
-              societyAvailability[slot]++;
+          for (var hour = 0; hour < 24 * 14; hour++) {
+            if (userAvailability[hour]) {
+              societyAvailability[hour]++;
             }
           }
           taskFinished();
@@ -100,10 +101,9 @@ function syncSocietyAvailability(societyId, callback) {
             return;
           }
           //return calculations to caller (front end):
-          callback(societyAvailability);
+          callback({societyAvailability, startDate: startDate});
           //store/cache calculations in database:
-          var syncDate = new Date();
-          societyDatabaseController.setSocietyAvailability(societyId, societyAvailability, syncDate);
+          societyDatabaseController.setSocietyAvailability(societyId, societyAvailability, startDate);
         });
     });
   });
@@ -112,9 +112,11 @@ function syncSocietyAvailability(societyId, callback) {
 /**
  * Asynchronously gathers data for all users
  * @param userIds
+ * @param startDate
+ * @param endDate
  * @param callback
  */
-function syncAllUsersAvailability(userIds, callback) {
+function syncAllUsersAvailability(userIds, startDate, endDate, callback) {
   var allUsersAvailability = [];
   //sync each user availability and collect all users data
   async.each(userIds,
@@ -125,13 +127,13 @@ function syncAllUsersAvailability(userIds, callback) {
           taskFinished();
           return;
         }
-        getUserFreeBusyData(auth, function (freeBusyData, queryStartDate) {
+        getUserFreeBusyData(auth, startDate, endDate, function (freeBusyData) {
           if (!freeBusyData) {
-            console.error({'error': 'No free busy data retrieved from user calendar'});
+            console.log('No free busy data retrieved from user calendar');
             taskFinished();
             return;
           }
-          getUserAvailabilityArray(freeBusyData, queryStartDate, function (userAvailability) {
+          getUserAvailabilityArray(freeBusyData, startDate, function (userAvailability) {
             allUsersAvailability.push(userAvailability);
             taskFinished();
           });
@@ -148,17 +150,20 @@ function syncAllUsersAvailability(userIds, callback) {
     });
 }
 
-function getUserFreeBusyData(auth, callback) {
-  var dateStart = new Date(); //current date
-  var dateEnd = new Date();
-  dateEnd.setDate(dateEnd.getDate() + 14); //2 weeks ahead
-
+/**
+ * Gets user freeBusy data for the next 2 weeks.
+ * @param auth
+ * @param startDate
+ * @param endDate
+ * @param callback
+ */
+function getUserFreeBusyData(auth, startDate, endDate, callback) {
   var freeBusyApi = google.calendar({version: 'v3', auth}).freebusy.query;
   var apiOptions = {
     resource: {
       items: [{'id': 'primary'}],
-      timeMin: dateStart.toISOString(),
-      timeMax: dateEnd.toISOString()
+      timeMin: startDate.toISOString(),
+      timeMax: endDate.toISOString()
     }
   };
 
@@ -168,41 +173,32 @@ function getUserFreeBusyData(auth, callback) {
       callback(null);
       return;
     }
-    console.log('free busy result:');
-    console.log(result.data.calendars.primary.busy);
     if (result.data.calendars.primary.busy.length > 0) {
-      callback(result.data.calendars.primary.busy, dateStart);
+      callback(result.data.calendars.primary.busy);
     } else {
       callback(null);
     }
   });
 }
 
+/**
+ * Gets user availability
+ * @param events
+ * @param queryStartDate
+ * @param callback
+ */
 function getUserAvailabilityArray(events, queryStartDate, callback) {
-  //Search Queries:
-  const DAYS = 7; //one week
-  const START_HOUR = 8; //todo timezone
-  const END_HOUR = 22;
-  const SLOTS_IN_DAY = END_HOUR - START_HOUR;
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  const MS_PER_HOUR = 1000 * 60 * 60;
+  var eventEndHour, eventStartHour, eventStartDate, eventEndDate;
+  var availability = Array(24 * 14).fill(true);
 
-  var daysSinceStartDay, hoursSinceStartHour, startDate, endDate, startSlot, endSlot;
-  var availability = Array(SLOTS_IN_DAY * DAYS).fill(true);
   for (var i = 0; i < events.length; i++) {
     var {start, end} = events[i];
-    startDate = new Date(start);
-    endDate = new Date(end);
-
-    daysSinceStartDay = Math.floor((startDate.getTime() - queryStartDate.getTime()) / MS_PER_DAY);
-    hoursSinceStartHour = startDate.getUTCHours() - START_HOUR;
-    startSlot = (daysSinceStartDay * SLOTS_IN_DAY) + hoursSinceStartHour;
-
-    daysSinceStartDay = Math.floor((endDate.getTime() - queryStartDate.getTime()) / MS_PER_DAY);
-    hoursSinceStartHour = endDate.getUTCHours() - START_HOUR;
-    endSlot = (daysSinceStartDay * SLOTS_IN_DAY) + hoursSinceStartHour;
-    if (endDate.getUTCMinutes() > 0) endSlot++;
-
-    availability.fill(false, startSlot, endSlot + 1); //+1 because endIndex is non-inclusive
+    eventStartDate = new Date(start);
+    eventEndDate = new Date(end);
+    eventStartHour = Math.floor((eventStartDate.getTime() - queryStartDate.getTime()) / MS_PER_HOUR);
+    eventEndHour = Math.ceil((eventEndDate.getTime() - queryStartDate.getTime()) / MS_PER_HOUR);
+    availability.fill(false, eventStartHour, eventEndHour);
   }
   callback(availability);
 }

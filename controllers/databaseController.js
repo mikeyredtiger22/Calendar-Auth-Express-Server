@@ -227,24 +227,25 @@ function userInCommittee(userId, societyId, callback) {
 }
 
 /**
- * Returns sync date of last society availability sync.
+ * Returns date of last society availability sync.
  * @param societyId
  * @param callback
  */
 function getLastSyncDate(societyId, callback) {
-  societies.findOne({_id: societyId}, {fields: {_id: 0, lastSyncDate: 1}}, function (err, {lastSyncDate}) {
+  societies.findOne({_id: societyId}, {fields: {_id: 0, startDate: 1}}, function (err, {startDate}) {
     if (handleError(err, callback, null)) return;
-    callback(lastSyncDate);
+    callback(startDate);
   });
 }
 
 /**
- * Returns cached society availability.
+ * Returns cached society availability and sync date.
  * @param societyId
  * @param callback
  */
 function getSocietyAvailability(societyId, callback) {
-  societies.findOne({_id: societyId}, {fields: {_id: 0, availability: 1}}, function (err, {availability}) {
+  societies.findOne({_id: societyId}, {fields: {_id: 0, availability: 1, startDate: 1}},
+    function (err, availability) {
     if (handleError(err, callback, null)) return;
       callback(availability);
   });
@@ -254,11 +255,11 @@ function getSocietyAvailability(societyId, callback) {
  * Caches society availability and sync date in database.
  * @param societyId
  * @param societyAvailability
- * @param syncDate
+ * @param startDate
  */
-function setSocietyAvailability(societyId, societyAvailability, syncDate) {
+function setSocietyAvailability(societyId, societyAvailability, startDate) {
   societies.updateOne({_id: societyId},
-    {$set: {availability: societyAvailability, lastSyncDate: syncDate}},
+    {$set: {availability: societyAvailability, startDate: startDate}},
     function (err) {
     handleError(err);
   });
