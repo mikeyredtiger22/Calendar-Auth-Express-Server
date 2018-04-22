@@ -1,7 +1,7 @@
 var {userDatabaseController} = require('./databaseController');
 
-function getUserSocieties(userId, callback) {
-  userDatabaseController.getUserObject(userId, callback);
+function getUserSocietiesInfo(userId, callback) {
+  userDatabaseController.getUserSocietiesInfo(userId, callback);
 }
 
 function createSociety(userId, societyName, callback) {
@@ -13,7 +13,7 @@ function joinSociety(userId, societyId, callback) {
 }
 
 module.exports = {
-  getUserObject: getUserSocieties,
+  getUserSocietiesInfo: getUserSocietiesInfo,
   createSociety: createSociety,
   joinSociety: joinSociety
 };

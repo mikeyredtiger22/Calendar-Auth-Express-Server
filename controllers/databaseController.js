@@ -148,10 +148,9 @@ function getUserAuthTokens(userId, callback) {
  * @param userId
  * @param callback with error or: {joined: [societies], committees: [societies], available: [societies]}
  */
-function getUserObject(userId, callback) {
+function getUserSocietiesInfo(userId, callback) {
   getUser(userId, function (err, user) {
-    console.log(user);
-    if (handleError(err, callback)) return;
+    if (handleError(err, callback)) return; //todo handle db returning null for no query match! all methods
     getAllSocieties(function (err, societies) {
       if (handleError(err, callback)) return;
 
@@ -282,7 +281,7 @@ module.exports = {
     registerUserAuthTokens: registerUserAuthTokens
   },
   userDatabaseController: {
-    getUserObject: getUserObject,
+    getUserSocietiesInfo: getUserSocietiesInfo,
     createSociety: createSociety,
     joinSociety: joinSociety
   },

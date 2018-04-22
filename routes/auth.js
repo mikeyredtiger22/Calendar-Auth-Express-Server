@@ -9,7 +9,6 @@ var router = express.Router();
  * initiated by front end.
  */
 router.get('/', function (req, res) {
-  console.log('received auth code response');
   var authCode = req.query.code;
   authController.registerUserAuthTokens(authCode, function (response) {
     var redirectPath = '';

@@ -13,7 +13,6 @@ const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_U
  * @param callback
  */
 function registerUserAuthTokens(authCode, callback) {
-	console.log('auth code: ' + authCode);
 	//Exchange auth code for tokens
 	oauth2Client.getToken(authCode).then(function (tokenResponse) {
 	  //todo validate token?
