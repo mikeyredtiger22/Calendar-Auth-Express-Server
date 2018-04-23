@@ -12,8 +12,13 @@ function joinSociety(userId, societyId, callback) {
   userDatabaseController.joinSociety(userId, societyId, callback);
 }
 
+function leaveSociety(userId, societyId, callback) {
+  userDatabaseController.leaveSociety(userId, societyId, callback);
+}
+
 module.exports = {
   getUserSocietiesInfo: getUserSocietiesInfo,
   createSociety: createSociety,
-  joinSociety: joinSociety
+  joinSociety: joinSociety,
+  leaveSociety: leaveSociety
 };

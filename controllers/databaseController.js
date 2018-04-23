@@ -213,6 +213,22 @@ function joinSociety(userId, societyId, callback) {
 }
 
 /**
+ * Remove user from society members.
+ * @param userId
+ * @param societyId
+ * @param callback
+ */
+function leaveSociety(userId, societyId, callback) {
+  societies.updateOne({_id: societyId}, {$pull: {members: userId}}, {multi: true}, function (err) {
+    if (handleError(err, callback)) return;
+    users.updateOne({_id: userId}, {$pull: {societies: societyId}}, {multi: true}, function (err) {
+      if (handleError(err, callback)) return;
+      callback({removed: true});
+    });
+  });
+}
+
+/**
  * Returns boolean: true if user is in committee of society.
  * @param userId
  * @param societyId
@@ -283,7 +299,8 @@ module.exports = {
   userDatabaseController: {
     getUserSocietiesInfo: getUserSocietiesInfo,
     createSociety: createSociety,
-    joinSociety: joinSociety
+    joinSociety: joinSociety,
+    leaveSociety: leaveSociety
   },
   societyDatabaseController: {
     getSocietyAvailability: getSocietyAvailability,
