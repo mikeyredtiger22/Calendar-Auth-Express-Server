@@ -50,7 +50,7 @@ router.delete('/', function (req, res) {
     res.json({'error': 'No societyId provided in call'});
     return;
   }
-  userController.joinSociety(req.query.userId, req.query.societyId, function (response) {
+  userController.leaveSociety(req.query.userId, req.query.societyId, function (response) {
     res.json(response);
   });
 });

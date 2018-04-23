@@ -292,6 +292,22 @@ function getAllSocietyMembers(societyId, callback) {
   });
 }
 
+/**
+ * Deletes society. Removes societyId from all users committees and societies field.
+ * @param userId
+ * @param societyId
+ * @param callback
+ */
+function deleteSociety(userId, societyId, callback) {
+  societies.deleteOne({_id: societyId}, function (err) {
+    if (handleError(err, callback)) return;
+    users.updateMany({}, {$pull: {societies: societyId, committees: societyId}}, function (err) {
+      if (handleError(err, callback)) return;
+      callback({deleted: true});
+    });
+  });
+}
+
 module.exports = {
   authDatabaseController: {
     registerUserAuthTokens: registerUserAuthTokens
@@ -308,7 +324,8 @@ module.exports = {
     getAllSocietyMembers: getAllSocietyMembers,
     getUserAuthTokens: getUserAuthTokens,
     userInCommittee: userInCommittee,
-    getLastSyncDate: getLastSyncDate
+    getLastSyncDate: getLastSyncDate,
+    deleteSociety: deleteSociety
   }
 };
 

@@ -203,6 +203,17 @@ function getUserAvailabilityArray(events, queryStartDate, callback) {
   callback(availability);
 }
 
+function deleteSociety(userId, societyId, callback) {
+  societyDatabaseController.userInCommittee(userId, societyId, function (userInCommittee) {
+    if (!userInCommittee) {
+      callback({error: 'User not in society committee.'});
+      return;
+    }
+    societyDatabaseController.deleteSociety(userId, societyId, callback);
+  });
+}
+
 module.exports = {
-  getSocietyAvailability: getSocietyAvailability
+  getSocietyAvailability: getSocietyAvailability,
+  deleteSociety: deleteSociety
 };

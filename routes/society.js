@@ -16,4 +16,18 @@ router.get('/', function(req, res) { //TODO: timezone conversion on fron
   });
 });
 
+router.delete('/', function(req, res) {
+  if (!req.query.userId) {
+    res.json({'error': 'No userId provided in call'});
+    return;
+  }
+  if (!req.query.societyId) {
+    res.json({'error': 'No societyId provided in call'});
+    return;
+  }
+  societyController.deleteSociety(req.query.userId, req.query.societyId, function (response) {
+    res.json(response);
+  });
+});
+
 module.exports = router;
