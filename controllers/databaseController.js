@@ -12,18 +12,18 @@ MongoClient.connect(url, function (err, client) {
   if (err) throw err;
   var db = client.db('db');
 
-  users = db.collection("users", function (err, res) {
+  users = db.collection("users", function (err) {
     if (err) throw err;
   });
-  societies = db.collection("societies", function (err, res) {
+  societies = db.collection("societies", function (err) {
     if (err) throw err;
   });
 
   //Index collections by _id
-  users.createIndex({_id: 1}, function (err, result) {
+  users.createIndex({_id: 1}, function (err) {
     if (err) throw err;
   });
-  societies.createIndex({_id: 1}, function (err, result) {
+  societies.createIndex({_id: 1}, function (err) {
     if (err) throw err;
   });
 
@@ -111,7 +111,7 @@ function registerUserAuthTokens(userId, tokens, callback) {
  * @param callback
  */
 function createUserAuthTokens(userId, tokens, callback) {
-  users.insertOne({_id: userId, tokens: tokens}, function (err, res) {
+  users.insertOne({_id: userId, tokens: tokens}, function (err) {
     if (handleError(err, callback)) return;
     callback({newUser: true, userId: userId});
   });
@@ -124,7 +124,7 @@ function createUserAuthTokens(userId, tokens, callback) {
  * @param callback
  */
 function updateUserAuthTokens(userId, tokens, callback) {
-  users.updateOne({_id: userId}, {$set: {tokens: tokens}}, function (err, result) {
+  users.updateOne({_id: userId}, {$set: {tokens: tokens}}, function (err) {
     if (handleError(err, callback)) return;
     callback({updatedAuth: true, userId: userId});
   });
@@ -180,19 +180,41 @@ function getUserSocietiesInfo(userId, callback) {
 }
 
 /**
- * Create new society in database. User is automatically added to committee of society.
+ * Create new society in database. Must be a unique society name (ignoring case).
+ * User is automatically added to committee of society.
  * @param userId
  * @param societyName
  * @param callback
  */
 function createSociety(userId, societyName, callback) {
-  societies.insertOne({_id: String(ObjectID()), name: societyName, committee: [userId]}, function (err, result) {
-    if (handleError(err, callback)) return;
-    var societyId = result.insertedId;
-    users.updateOne({_id: userId}, {$push: {committees: societyId}}, function (err, result) {
+  uniqueSocietyName(societyName, function (unique) {
+    if (!unique) {
+      callback({error: 'This society name has already been taken.'});
+      return;
+    }
+    societies.insertOne({_id: String(ObjectID()), name: societyName, committee: [userId]}, function (err, result) {
       if (handleError(err, callback)) return;
-      callback({societyId: societyId});
+      var societyId = result.insertedId;
+      users.updateOne({_id: userId}, {$push: {committees: societyId}}, function (err) {
+        if (handleError(err, callback)) return;
+        callback({societyId: societyId});
+      });
     });
+  });
+}
+
+function uniqueSocietyName(societyName, callback) {
+  societies.find({}, {projection: {_id: 0, name: 1}}).toArray(function (err, array) {
+    if (handleError(err, callback, true));
+    if (!array) callback(true);
+    var lowerCaseSocietyName = societyName.toLowerCase();
+    for (var i=0; i<array.length; i++) {
+      if (array[i].name.toLowerCase() === lowerCaseSocietyName) {
+        callback(false);
+        return;
+      }
+    }
+    callback(true);
   });
 }
 
@@ -203,9 +225,9 @@ function createSociety(userId, societyName, callback) {
  * @param callback
  */
 function joinSociety(userId, societyId, callback) {
-  societies.updateOne({_id: societyId}, {$push: {members: userId}}, function (err, result) {
+  societies.updateOne({_id: societyId}, {$push: {members: userId}}, function (err) {
     if (handleError(err, callback)) return;
-    users.updateOne({_id: userId}, {$push: {societies: societyId}}, function (err, result) {
+    users.updateOne({_id: userId}, {$push: {societies: societyId}}, function (err) {
       if (handleError(err, callback)) return;
       callback({joined: true});
     });
