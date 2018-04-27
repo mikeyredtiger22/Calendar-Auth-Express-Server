@@ -70,7 +70,7 @@ function syncSocietyAvailability(societyId, callback) {
       callback(err);
       return;
     }
-    if (!userIds) {
+    if (!userIds || !userIds.length) {
       callback({'error': 'No members found in society.'});
       return;
     }
