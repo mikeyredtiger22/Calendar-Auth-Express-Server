@@ -1,16 +1,16 @@
 var MongoClient = require('mongodb').MongoClient;
 var ObjectID = require('mongodb').ObjectID;
 
-var url = "mongodb://localhost:27017";
+var hostedDatabaseUrl = process.env.database_url;
 
 //Collections:
 var users;
 var societies;
 
 //Initiate database and collections
-MongoClient.connect(url, function (err, client) {
+MongoClient.connect(hostedDatabaseUrl, function (err, client) {
   if (err) throw err;
-  var db = client.db('db');
+  var db = client.db('db1');
 
   users = db.collection("users", function (err) {
     if (err) throw err;
@@ -19,7 +19,7 @@ MongoClient.connect(url, function (err, client) {
     if (err) throw err;
   });
 
-  var REMOVE_SOCIETIES = false;
+  var REMOVE_SOCIETIES = process.env.remove_societies;
   if (REMOVE_SOCIETIES) {
     societies.drop();
     users.updateMany({}, {$set: {committees: [], societies: []}},
