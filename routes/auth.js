@@ -1,7 +1,7 @@
 var authController = require('../controllers/authController');
 var express = require('express');
 
-const FRONT_END_REDIRECT_URL = process.env.front_end-redirect_url;
+const FRONT_END_REDIRECT_URL = process.env.front_end_redirect_url;
 var router = express.Router();
 
 /**
