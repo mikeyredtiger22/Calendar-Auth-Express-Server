@@ -19,6 +19,15 @@ MongoClient.connect(url, function (err, client) {
     if (err) throw err;
   });
 
+  var REMOVE_SOCIETIES = false;
+  if (REMOVE_SOCIETIES) {
+    societies.drop();
+    users.updateMany({}, {$set: {committees: [], societies: []}},
+      function (err) {
+        if (err) console.error(err);
+      });
+  }
+
   //Index collections by _id
   users.createIndex({_id: 1}, function (err) {
     if (err) throw err;
@@ -160,12 +169,12 @@ function getUserSocietiesInfo(userId, callback) {
 
       for (var i = 0; i < societies.length; i++) {
         var currSociety = societies[i];
-        if (user.societies.includes(currSociety._id)) {
+        if (user.societies && user.societies.includes(currSociety._id)) {
           joined.push(currSociety);
         } else {
           available.push(currSociety);
         }
-        if (user.committees.includes(currSociety._id)) {
+        if (user.committees && user.committees.includes(currSociety._id)) {
           committees.push(currSociety);
         }
       }
@@ -189,7 +198,7 @@ function getUserSocietiesInfo(userId, callback) {
 function createSociety(userId, societyName, callback) {
   uniqueSocietyName(societyName, function (unique) {
     if (!unique) {
-      callback({error: 'This society name has already been taken.'});
+      callback({nameDuplicate: true});
       return;
     }
     societies.insertOne({_id: String(ObjectID()), name: societyName, committee: [userId]}, function (err, result) {
@@ -205,10 +214,10 @@ function createSociety(userId, societyName, callback) {
 
 function uniqueSocietyName(societyName, callback) {
   societies.find({}, {projection: {_id: 0, name: 1}}).toArray(function (err, array) {
-    if (handleError(err, callback, true));
+    if (handleError(err, callback, true)) ;
     if (!array) callback(true);
     var lowerCaseSocietyName = societyName.toLowerCase();
-    for (var i=0; i<array.length; i++) {
+    for (var i = 0; i < array.length; i++) {
       if (array[i].name.toLowerCase() === lowerCaseSocietyName) {
         callback(false);
         return;
@@ -269,9 +278,9 @@ function userInCommittee(userId, societyId, callback) {
  * @param callback
  */
 function getLastSyncDate(societyId, callback) {
-  societies.findOne({_id: societyId}, {fields: {_id: 0, startDate: 1}}, function (err, {startDate}) {
+  societies.findOne({_id: societyId}, {fields: {_id: 0, syncDate: 1}}, function (err, {syncDate}) {
     if (handleError(err, callback, null)) return;
-    callback(startDate);
+    callback(syncDate);
   });
 }
 
@@ -283,9 +292,9 @@ function getLastSyncDate(societyId, callback) {
 function getSocietyAvailability(societyId, callback) {
   societies.findOne({_id: societyId}, {fields: {_id: 0, availability: 1, startDate: 1}},
     function (err, availability) {
-    if (handleError(err, callback, null)) return;
+      if (handleError(err, callback, null)) return;
       callback(availability);
-  });
+    });
 }
 
 /**
@@ -294,12 +303,12 @@ function getSocietyAvailability(societyId, callback) {
  * @param societyAvailability
  * @param startDate
  */
-function setSocietyAvailability(societyId, societyAvailability, startDate) {
+function setSocietyAvailability(societyId, societyAvailability, startDate, syncDate) {
   societies.updateOne({_id: societyId},
-    {$set: {availability: societyAvailability, startDate: startDate}},
+    {$set: {availability: societyAvailability, startDate: startDate, syncDate: syncDate}},
     function (err) {
-    handleError(err);
-  });
+      handleError(err);
+    });
 }
 
 /**

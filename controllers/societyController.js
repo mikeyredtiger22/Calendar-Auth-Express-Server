@@ -24,9 +24,9 @@ function getSocietyAvailability(userId, societyId, callback) {
       return;
     }
     var date = new Date();
-    var oneDayAgo = date.setDate(date.getDate() - 1);
+    var oneMinuteAgo = date.setMinutes(date.getMinutes() - 1);
     societyDatabaseController.getLastSyncDate(societyId, function (syncDate) {
-      if (syncDate && (new Date(syncDate)) > oneDayAgo) {
+      if (syncDate && (new Date(syncDate)) > oneMinuteAgo) {
         societyDatabaseController.getSocietyAvailability(societyId, function (societyAvailability) {
           if (societyAvailability !== null) {
             callback(societyAvailability);
@@ -81,8 +81,6 @@ function syncSocietyAvailability(societyId, callback) {
     endDate.setDate(endDate.getDate() + 14); //2 weeks ahead
 
     syncAllUsersAvailability(userIds, startDate, endDate, function (allUsersAvailability) {
-      console.log('allUsersAvailability:');
-      console.log(allUsersAvailability);
       var societyAvailability = Array(24 * 14).fill(0);
 
       async.each(allUsersAvailability,
@@ -101,9 +99,10 @@ function syncSocietyAvailability(societyId, callback) {
             return;
           }
           //return calculations to caller (front end):
-          callback({societyAvailability, startDate: startDate});
+          callback({availability: societyAvailability, startDate: startDate});
           //store/cache calculations in database:
-          societyDatabaseController.setSocietyAvailability(societyId, societyAvailability, startDate);
+          var syncDate = new Date();
+          societyDatabaseController.setSocietyAvailability(societyId, societyAvailability, startDate, syncDate);
         });
     });
   });

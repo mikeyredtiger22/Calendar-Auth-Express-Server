@@ -2,7 +2,7 @@ var societyController = require('../controllers/societyController');
 var express = require('express');
 var router = express.Router();
 
-router.get('/', function(req, res) { //TODO: timezone conversion on front end 
+router.get('/', function(req, res) {
   if (!req.query.userId) {
     res.json({'error': 'No userId provided in call'});
     return;
